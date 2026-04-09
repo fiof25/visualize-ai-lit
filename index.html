@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>orbs</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #F8F5F0; cursor: crosshair; }
+
+    #scene {
+      position: fixed; inset: 0;
+      isolation: isolate;
+    }
+
+    .ball {
+      position: absolute;
+      border-radius: 50%;
+      mix-blend-mode: multiply;
+      transform: translate(-50%, -50%);
+      will-change: left, top;
+    }
+
+    #cursor {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 200;
+      transform: translate(-50%, -50%);
+      width: 8px; height: 8px; background: rgba(0,0,0,0.18);
+      transition: width .15s, height .15s;
+    }
+    #cursor.big { width: 36px; height: 36px; background: rgba(0,0,0,0.06); }
+  </style>
+</head>
+<body>
+
+<div id="scene"></div>
+<div id="cursor"></div>
+
+<script>
+(() => {
+'use strict';
+
+const COLORS = [
+  '#D93C2A',  // vermillion red
+  '#3A78D4',  // cobalt blue
+  '#EAB028',  // golden yellow
+  '#2A6645',  // forest green
+  '#D4649A',  // magenta pink
+];
+
+const scene    = document.getElementById('scene');
+const cursorEl = document.getElementById('cursor');
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+window.addEventListener('resize', () => { W = window.innerWidth; H = window.innerHeight; });
+
+// ── FLOW FIELD ────────────────────────────────────────────────────────────────
+function flowAngle(x, y, t) {
+  return (
+    Math.sin(x * 0.0028 + t * 0.22) * Math.cos(y * 0.0022 + t * 0.18) +
+    Math.cos(x * 0.0018 - y * 0.0024 + t * 0.14) * 0.55 +
+    Math.sin(x * 0.004  + y * 0.003  + t * 0.30) * 0.3
+  ) * Math.PI;
+}
+
+// ── BALL ──────────────────────────────────────────────────────────────────────
+class Ball {
+  constructor(i) {
+    // Spread loosely across canvas
+    const ang    = (i / 30) * Math.PI * 2 + Math.random() * 0.9;
+    const spread = 0.18 + Math.random() * 0.30;
+    this.x  = W * 0.5 + Math.cos(ang) * W * spread;
+    this.y  = H * 0.5 + Math.sin(ang) * H * spread * 0.8;
+    this.vx = (Math.random() - 0.5) * 0.4;
+    this.vy = (Math.random() - 0.5) * 0.4;
+    this.r  = 55 + Math.random() * 110;
+
+    this.color  = COLORS[i % COLORS.length];
+    this.blurPx = Math.random() < 0.28 ? 8 + Math.random() * 18 : 0;
+    this.phase  = Math.random() * Math.PI * 2;
+    this.wobble = 0.35 + Math.random() * 0.9;
+    this.pulseT = Math.random() * Math.PI * 2;
+    this.baseR  = this.r;
+
+    // DOM element
+    this.el = document.createElement('div');
+    this.el.className = 'ball';
+    const d = this.r * 2;
+    Object.assign(this.el.style, {
+      width:      d + 'px',
+      height:     d + 'px',
+      background: this.color,
+      opacity:    this.blurPx ? '0.72' : '0.88',
+      filter:     this.blurPx ? `blur(${this.blurPx}px)` : 'none',
+    });
+    scene.appendChild(this.el);
+  }
+
+  tick(t, mx, my) {
+    // Subtle size pulse
+    this.pulseT += 0.014;
+    this.r = this.baseR * (1 + Math.sin(this.pulseT) * 0.014);
+
+    // Flow field
+    const angle = flowAngle(this.x, this.y, t + this.phase * 0.4);
+    const fMag  = 0.016 * this.wobble;
+    this.vx += Math.cos(angle) * fMag;
+    this.vy += Math.sin(angle) * fMag;
+
+    // Mouse repulsion
+    const dx = this.x - mx, dy = this.y - my;
+    const md = Math.hypot(dx, dy);
+    const MR = 220;
+    if (md < MR && md > 0.5) {
+      const f = ((MR - md) / MR) ** 2.2 * 1.0;
+      this.vx += (dx / md) * f;
+      this.vy += (dy / md) * f;
+    }
+
+    // Soft centre gravity — keeps cluster alive and in frame
+    const cd = Math.hypot(this.x - W * 0.5, this.y - H * 0.5);
+    const maxD = Math.min(W, H) * 0.44;
+    if (cd > maxD) {
+      const pull = (cd - maxD) * 0.00028;
+      this.vx += (W * 0.5 - this.x) / cd * pull;
+      this.vy += (H * 0.5 - this.y) / cd * pull;
+    }
+
+    // Fluid damping — no bounce energy
+    this.vx *= 0.960;
+    this.vy *= 0.960;
+
+    // Low speed cap = fluid, drifting feel
+    const spd = Math.hypot(this.vx, this.vy);
+    if (spd > 3.5) { this.vx = this.vx / spd * 3.5; this.vy = this.vy / spd * 3.5; }
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Soft wall push
+    const p = this.r * 0.4;
+    if (this.x < p)      this.vx += (p - this.x)      * 0.06;
+    if (this.x > W - p)  this.vx -= (this.x - (W - p)) * 0.06;
+    if (this.y < p)      this.vy += (p - this.y)       * 0.06;
+    if (this.y > H - p)  this.vy -= (this.y - (H - p)) * 0.06;
+
+    // Move DOM element
+    this.el.style.left = this.x + 'px';
+    this.el.style.top  = this.y + 'px';
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+const BALL_N = 30;
+const balls  = Array.from({ length: BALL_N }, (_, i) => new Ball(i));
+
+// Pre-warm: let flow field settle positions before first render
+for (let i = 0; i < 400; i++) {
+  balls.forEach(b => b.tick(i * 0.001, -9999, -9999));
+}
+
+// ── SCATTER ───────────────────────────────────────────────────────────────────
+function scatter(cx, cy) {
+  balls.forEach(b => {
+    const dx = b.x - cx, dy = b.y - cy;
+    const d  = Math.hypot(dx, dy) || 0.5;
+    const R  = 460;
+    if (d < R) {
+      const f = ((R - d) / R) ** 1.5 * 5.0;
+      b.vx += (dx / d) * f;
+      b.vy += (dy / d) * f;
+    }
+  });
+}
+
+// ── INPUT ─────────────────────────────────────────────────────────────────────
+const mouse = { x: -9999, y: -9999 };
+
+document.addEventListener('mousemove', e => {
+  mouse.x = e.clientX; mouse.y = e.clientY;
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top  = e.clientY + 'px';
+});
+document.addEventListener('mousedown', () => cursorEl.classList.add('big'));
+document.addEventListener('mouseup',   () => cursorEl.classList.remove('big'));
+document.addEventListener('click',     e => scatter(e.clientX, e.clientY));
+
+document.addEventListener('touchmove', e => {
+  const t = e.touches[0]; mouse.x = t.clientX; mouse.y = t.clientY;
+}, { passive: true });
+document.addEventListener('touchstart', e => {
+  const t = e.touches[0]; scatter(t.clientX, t.clientY);
+}, { passive: true });
+
+// ── LOOP ──────────────────────────────────────────────────────────────────────
+let t = 0;
+function loop() {
+  t += 0.001;
+  balls.forEach(b => b.tick(t, mouse.x, mouse.y));
+  requestAnimationFrame(loop);
+}
+loop();
+
+})();
+</script>
+</body>
+</html>
