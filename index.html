@@ -88,10 +88,16 @@ new p5(p => {
     return { verts: newV, mods: newM };
   }
 
+  // Use catmull-rom splines instead of straight edges — grown polygon vertices
+  // become smooth curves, giving the soft continuous edge of a real paint wash.
   function drawPoly({ verts }) {
+    const n = verts.length;
     p.beginShape();
-    for (const { x, y } of verts) p.vertex(x, y);
-    p.endShape(p.CLOSE);
+    p.curveVertex(verts[n - 1].x, verts[n - 1].y); // phantom start
+    for (const { x, y } of verts) p.curveVertex(x, y);
+    p.curveVertex(verts[0].x, verts[0].y);          // phantom end (close)
+    p.curveVertex(verts[1].x, verts[1].y);
+    p.endShape();
   }
 
   // ── FLOW FIELD ───────────────────────────────────────────────────────────────
@@ -203,41 +209,46 @@ new p5(p => {
   }
 
   // ── WATERCOLOUR RENDER ───────────────────────────────────────────────────────
-  // Mirrors the waterColour() function from the user's reference code, adapted
-  // for animation: octagon base → 2 initial grows → N layers each with a
-  // temporary grow (not saved), one mid-loop saved grow for more detail.
   function renderWatercolour(ball) {
     const [rv, gv, bv] = ball.color;
-
-    // 16 transparent layers — fewer = lighter, more dilute wash feel
     const numLayers  = 16;
-    const layerAlpha = 255 / (2 * numLayers); // ≈ 8
+    const baseAlpha  = 255 / (2 * numLayers); // ≈ 8
 
-    p.fill(rv, gv, bv, layerAlpha);
     p.noStroke();
 
-    // Octagon starting shape centred on ball
-    const n     = 8;
-    const verts = Array.from({ length: n }, (_, i) => {
-      const a = (i / n) * Math.PI * 2;
-      return { x: ball.x + Math.cos(a) * ball.r,
-               y: ball.y + Math.sin(a) * ball.r };
-    });
-    const mods = Array.from({ length: n }, () => p.random(0.15, 0.72));
+    // Shape morphing: advance a seed slowly so the blob changes over ~6 s,
+    // then crossfade between the outgoing shape (seedA) and incoming (seedB)
+    // using the fractional part as blend weight — no visible snap between shapes.
+    const MORPH_RATE = 2.5;                          // seeds per simT unit
+    const morphT     = simT * MORPH_RATE;
+    const seedBase   = Math.floor(ball.phase * 9973); // unique per ball
+    const seedA      = seedBase + Math.floor(morphT);
+    const seedB      = seedA + 1;
+    const blend      = morphT % 1;                   // 0 → 1 crossfade progress
 
-    // Two initial grows — 8 → 16 → 32 verts, organic base shape
-    let poly = growPoly(growPoly({ verts, mods }));
+    function drawBlob(seed, alphaScale) {
+      if (alphaScale < 0.01) return;
+      p.randomSeed(seed);
+      p.fill(rv, gv, bv, baseAlpha * alphaScale);
 
-    for (let i = 0; i < numLayers; i++) {
-      // Mid-loop saved grow adds fine edge detail, matching the original's
-      // two periodic poly = poly.grow().grow() at ⅓ and ⅔ through the loop
-      // One mid-loop grow — lighter than two, edges stay softer
-      if (i === Math.floor(numLayers / 2)) {
-        poly = growPoly(poly); // 32 → 64 verts
+      const n     = 8;
+      const verts = Array.from({ length: n }, (_, i) => {
+        const a = (i / n) * Math.PI * 2;
+        return { x: ball.x + Math.cos(a) * ball.r,
+                 y: ball.y + Math.sin(a) * ball.r };
+      });
+      const mods = Array.from({ length: n }, () => p.random(0.32, 0.90));
+
+      let poly = growPoly(growPoly({ verts, mods }));
+      for (let i = 0; i < numLayers; i++) {
+        if (i === Math.floor(numLayers / 2)) poly = growPoly(poly);
+        drawPoly(growPoly(poly));
       }
-      // Temporary grow for this layer — different each call, not saved
-      drawPoly(growPoly(poly));
     }
+
+    drawBlob(seedA, 1 - blend); // outgoing shape, fading out
+    drawBlob(seedB, blend);     // incoming shape, fading in
+    p.randomSeed();             // restore unseeded randomness for other code
   }
 
   // ── SETUP & DRAW ─────────────────────────────────────────────────────────────
