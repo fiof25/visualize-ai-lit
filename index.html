@@ -211,44 +211,32 @@ new p5(p => {
   // ── WATERCOLOUR RENDER ───────────────────────────────────────────────────────
   function renderWatercolour(ball) {
     const [rv, gv, bv] = ball.color;
-    const numLayers  = 16;
-    const baseAlpha  = 255 / (2 * numLayers); // ≈ 8
 
+    // 16 transparent layers
+    const numLayers  = 16;
+    const layerAlpha = 255 / (2 * numLayers); // ≈ 8
+
+    p.fill(rv, gv, bv, layerAlpha);
     p.noStroke();
 
-    // Shape morphing: advance a seed slowly so the blob changes over ~6 s,
-    // then crossfade between the outgoing shape (seedA) and incoming (seedB)
-    // using the fractional part as blend weight — no visible snap between shapes.
-    const MORPH_RATE = 2.5;                          // seeds per simT unit
-    const morphT     = simT * MORPH_RATE;
-    const seedBase   = Math.floor(ball.phase * 9973); // unique per ball
-    const seedA      = seedBase + Math.floor(morphT);
-    const seedB      = seedA + 1;
-    const blend      = morphT % 1;                   // 0 → 1 crossfade progress
+    // Octagon starting shape centred on ball
+    const n     = 8;
+    const verts = Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2;
+      return { x: ball.x + Math.cos(a) * ball.r,
+               y: ball.y + Math.sin(a) * ball.r };
+    });
+    const mods = Array.from({ length: n }, () => p.random(0.32, 0.90));
 
-    function drawBlob(seed, alphaScale) {
-      if (alphaScale < 0.01) return;
-      p.randomSeed(seed);
-      p.fill(rv, gv, bv, baseAlpha * alphaScale);
+    // Two initial grows — 8 → 16 → 32 verts
+    let poly = growPoly(growPoly({ verts, mods }));
 
-      const n     = 8;
-      const verts = Array.from({ length: n }, (_, i) => {
-        const a = (i / n) * Math.PI * 2;
-        return { x: ball.x + Math.cos(a) * ball.r,
-                 y: ball.y + Math.sin(a) * ball.r };
-      });
-      const mods = Array.from({ length: n }, () => p.random(0.32, 0.90));
-
-      let poly = growPoly(growPoly({ verts, mods }));
-      for (let i = 0; i < numLayers; i++) {
-        if (i === Math.floor(numLayers / 2)) poly = growPoly(poly);
-        drawPoly(growPoly(poly));
+    for (let i = 0; i < numLayers; i++) {
+      if (i === Math.floor(numLayers / 2)) {
+        poly = growPoly(poly); // 32 → 64 verts mid-loop
       }
+      drawPoly(growPoly(poly));
     }
-
-    drawBlob(seedA, 1 - blend); // outgoing shape, fading out
-    drawBlob(seedB, blend);     // incoming shape, fading in
-    p.randomSeed();             // restore unseeded randomness for other code
   }
 
   // ── SETUP & DRAW ─────────────────────────────────────────────────────────────
