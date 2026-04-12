@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>orbs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cactus+Classical+Serif&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #EDE7D8; cursor: crosshair; }
@@ -16,10 +19,48 @@
       transition: width .20s ease, height .20s ease;
     }
     #cursor.big { width: 28px; height: 28px; background: rgba(60, 45, 25, 0.07); }
+
+    #enter-btn {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 15px 27px;
+      border: 0.5px solid black;
+      border-radius: 38px;
+      cursor: pointer;
+      background: transparent;
+      color: black;
+      font-size: 18px;
+      white-space: nowrap;
+      text-decoration: none;
+      transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+    #enter-btn:hover {
+      background: black;
+      color: #f3ede0;
+      border-color: #f3ede0;
+    }
+    #enter-btn .btn-label {
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-weight: 400;
+    }
+    #enter-btn .btn-arrow {
+      font-family: -apple-system, 'SF Pro Text', sans-serif;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
 <div id="cursor"></div>
+<a id="enter-btn" href="#">
+  <span class="btn-label">Enter Platform</span>
+  <span class="btn-arrow">→</span>
+</a>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
 <script>
@@ -30,11 +71,11 @@ new p5(p => {
   const PR = 242, PG = 237, PB = 225;
 
   const COLORS = [
-    [205, 95,  68 ],  // terracotta red
-    [88,  130, 195],  // cornflower blue
-    [215, 165, 42 ],  // amber ochre
-    [82,  148, 108],  // viridian sage
-    [188, 98,  148],  // mauve rose
+    [190, 118, 98 ],  // soft terracotta
+    [108, 135, 178],  // muted cornflower
+    [198, 162, 95 ],  // muted ochre
+    [100, 148, 120],  // soft sage
+    [195, 148, 175],  // soft mauve
   ];
 
   const cursorEl = document.getElementById('cursor');
