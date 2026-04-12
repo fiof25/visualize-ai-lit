@@ -100,6 +100,36 @@
       line-height: 1;
     }
     #story-close:hover { color: #1e1810; }
+
+    #blob-tooltip {
+      position: fixed;
+      z-index: 120;
+      pointer-events: none;
+      background: #f3ede0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      max-width: 200px;
+      box-shadow: 0 4px 24px rgba(30, 24, 16, 0.14);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    #blob-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #blob-tooltip .tip-title {
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-size: 14px;
+      color: #1e1810;
+      margin-bottom: 5px;
+    }
+    #blob-tooltip .tip-body {
+      font-family: -apple-system, sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #888;
+    }
   </style>
 </head>
 <body>
@@ -108,6 +138,11 @@
   <span class="btn-label">Enter Platform</span>
   <span class="btn-arrow">→</span>
 </a>
+
+<div id="blob-tooltip">
+  <div class="tip-title" id="tip-title"></div>
+  <div class="tip-body" id="tip-body"></div>
+</div>
 
 <div id="story-panel">
   <div id="story-inner">
@@ -351,9 +386,13 @@ new p5(p => {
   }
 
   // ── STORY ────────────────────────────────────────────────────────────────────
-  const storyPanel = document.getElementById('story-panel');
-  const storyTitle = document.getElementById('story-title');
-  const storyBody  = document.getElementById('story-body');
+  const storyPanel  = document.getElementById('story-panel');
+  const storyTitle  = document.getElementById('story-title');
+  const storyBody   = document.getElementById('story-body');
+  const blobTooltip = document.getElementById('blob-tooltip');
+  const tipTitle    = document.getElementById('tip-title');
+  const tipBody     = document.getElementById('tip-body');
+  let   hoveredBlob = -1;
 
   function openStory(i) {
     storyTitle.textContent = `Story ${i + 1}`;
@@ -433,6 +472,33 @@ new p5(p => {
     mouse.x = e.clientX; mouse.y = e.clientY;
     cursorEl.style.left = e.clientX + 'px';
     cursorEl.style.top  = e.clientY + 'px';
+
+    if (mode === 'grid') {
+      const hit = balls.findIndex(b =>
+        Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r
+      );
+      if (hit !== hoveredBlob) {
+        hoveredBlob = hit;
+        if (hit !== -1) {
+          tipTitle.textContent = `Story ${hit + 1}`;
+          blobTooltip.classList.add('visible');
+        } else {
+          blobTooltip.classList.remove('visible');
+        }
+      }
+      if (hit !== -1) {
+        // Position above the blob, clamped to viewport
+        const x = Math.min(e.clientX + 14, W - 220);
+        const y = Math.max(e.clientY - 80, 8);
+        blobTooltip.style.left = x + 'px';
+        blobTooltip.style.top  = y + 'px';
+      }
+    } else {
+      if (hoveredBlob !== -1) {
+        hoveredBlob = -1;
+        blobTooltip.classList.remove('visible');
+      }
+    }
   });
   document.addEventListener('mousedown', () => cursorEl.classList.add('big'));
   document.addEventListener('mouseup',   () => cursorEl.classList.remove('big'));
