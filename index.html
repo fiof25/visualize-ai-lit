@@ -151,7 +151,7 @@ new p5(p => {
   // ── BALL ─────────────────────────────────────────────────────────────────────
   class Ball {
     constructor(i) {
-      const ang    = (i / 30) * Math.PI * 2 + Math.random() * 0.9;
+      const ang    = (i / 50) * Math.PI * 2 + Math.random() * 0.9;
       const spread = 0.18 + Math.random() * 0.62;
       this.x  = W * 0.5 + Math.cos(ang) * W * spread;
       this.y  = H * 0.5 + Math.sin(ang) * H * spread * 0.75;
@@ -285,7 +285,7 @@ new p5(p => {
     p.createCanvas(W, H);
     p.background(PR, PG, PB);  // begin with blank paper
 
-    balls = Array.from({ length: 30 }, (_, i) => new Ball(i));
+    balls = Array.from({ length: 45 }, (_, i) => new Ball(i));
 
     // Pre-warm: settle physics before first render
     for (let i = 0; i < 500; i++) {
