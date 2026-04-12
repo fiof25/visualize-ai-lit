@@ -266,7 +266,7 @@ new p5(p => {
     // that last ~20 frames — the visual memory of where paint has been.
     p.blendMode(p.BLEND);
     p.noStroke();
-    p.fill(PR, PG, PB, 12);   // alpha 12 ≈ 50-frame drying trail (~0.8 s)
+    p.fill(PR, PG, PB, 6);    // alpha 6 ≈ 100-frame drying trail (~1.6 s)
     p.rect(0, 0, W, H);
 
     // ② Physics step
