@@ -198,13 +198,9 @@
     #form-well {
       position: relative;
     }
-    .form-step {
-      display: none;
-      flex-direction: column;
-      gap: 30px;
-      transition: opacity 0.28s ease;
-    }
-    .form-step.active { display: flex; }
+    .form-step { display: none; flex-direction: column; gap: 30px; }
+    .form-step.active { display: flex; animation: stepIn 0.25s ease; }
+    @keyframes stepIn { from { opacity: 0; } to { opacity: 1; } }
 
     .form-prompt {
       font-family: 'Cactus Classical Serif', Georgia, serif;
@@ -212,7 +208,7 @@
       font-weight: 400;
       color: #1e1810;
       line-height: 1.35;
-      min-height: 2.8em;
+      min-height: 1.4em;
     }
     .form-prompt .caret {
       display: inline-block;
@@ -286,6 +282,7 @@
     .next-btn:hover { background: #1e1810; color: #f3ede0; }
 
     #submit-story-btn {
+      margin-left: auto;
       padding: 15px 32px;
       border: 0.5px solid rgba(60, 45, 25, 0.5);
       border-radius: 38px;
@@ -373,7 +370,7 @@
       <!-- Step 1 — Name -->
       <div class="form-step active" data-step="1">
         <div class="form-prompt" id="prompt-1"></div>
-        <input id="field-name" type="text" class="form-field" placeholder="your name…" autocomplete="off" />
+        <input id="field-name" type="text" class="form-field" autocomplete="off" />
         <div class="form-nav">
           <button class="next-btn" data-next="2">Continue →</button>
         </div>
@@ -382,7 +379,7 @@
       <!-- Step 2 — Story -->
       <div class="form-step" data-step="2">
         <div class="form-prompt" id="prompt-2"></div>
-        <textarea id="field-body" class="form-field form-textarea" placeholder="I use AI to…"></textarea>
+        <textarea id="field-body" class="form-field form-textarea"></textarea>
         <div class="form-nav">
           <button class="back-btn" data-back="1">← Back</button>
           <button class="next-btn" data-next="3">Continue →</button>
@@ -392,7 +389,7 @@
       <!-- Step 3 — Title (optional) -->
       <div class="form-step" data-step="3">
         <div class="form-prompt" id="prompt-3"></div>
-        <input id="field-title" type="text" class="form-field" placeholder="a title…" autocomplete="off" />
+        <input id="field-title" type="text" class="form-field" autocomplete="off" />
         <div class="form-nav">
           <button class="back-btn" data-back="2">← Back</button>
           <button class="next-btn" data-next="4">Preview →</button>
@@ -407,7 +404,7 @@
           <div id="preview-body-display"></div>
           <div id="preview-author-display"></div>
         </div>
-        <div class="form-nav center">
+        <div class="form-nav">
           <button class="back-btn" data-back="3">← Edit</button>
           <button id="submit-story-btn">Add my story to the canvas ✦</button>
         </div>
@@ -774,6 +771,7 @@ new p5(p => {
   document.addEventListener('mousedown', () => cursorEl.classList.add('big'));
   document.addEventListener('mouseup',   () => cursorEl.classList.remove('big'));
   document.addEventListener('click', e => {
+    if (overlay.classList.contains('open')) return;
     if (mode === 'freeform') {
       scatter(e.clientX, e.clientY);
     } else if (mode === 'grid') {
@@ -837,7 +835,7 @@ new p5(p => {
   const PROMPTS   = [
     null,
     "What's your name?",
-    "How do you use AI?",
+    "How do you use AI? Tell me about your experience.",
     "Give it a title.",
     "Here's your story.",
   ];
@@ -850,63 +848,38 @@ new p5(p => {
   let currentStep = 1;
 
   function showStep(n) {
-    const prev = document.querySelector('.form-step.active');
-    const next = document.querySelector(`.form-step[data-step="${n}"]`);
-    if (!next || next === prev) return;
+    formSteps.forEach(s => s.classList.remove('active'));
+    const step = document.querySelector(`.form-step[data-step="${n}"]`);
+    step.classList.add('active');
+    stepDots.forEach(d => d.classList.toggle('active', +d.dataset.step === n));
+    if (PROMPTS[n]) typewriter(document.getElementById(`prompt-${n}`), PROMPTS[n]);
+    const field = step.querySelector('.form-field');
+    if (field) setTimeout(() => field.focus(), 280);
     currentStep = n;
-
-    const doShow = () => {
-      if (prev) {
-        prev.classList.remove('active');
-        prev.style.opacity = '';
-        prev.style.display = 'none';
-      }
-      next.style.opacity = '0';
-      next.style.display = 'flex';
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        next.classList.add('active');
-        next.style.opacity = '1';
-      }));
-      stepDots.forEach(d => d.classList.toggle('active', +d.dataset.step === n));
-      const promptEl = document.getElementById(`prompt-${n}`);
-      if (promptEl && PROMPTS[n]) typewriter(promptEl, PROMPTS[n]);
-      const field = next.querySelector('.form-field');
-      if (field) setTimeout(() => field.focus(), 350);
-    };
-
-    if (prev) {
-      prev.style.opacity = '0';
-      setTimeout(doShow, 300);
-    } else {
-      doShow();
-    }
   }
 
   // ── NAV ───────────────────────────────────────────────────────────────────────
   document.querySelectorAll('.next-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const next = +btn.dataset.next;
       if (currentStep === 1 && !document.getElementById('field-name').value.trim()) {
         document.getElementById('field-name').focus(); return;
       }
       if (currentStep === 2 && !document.getElementById('field-body').value.trim()) {
         document.getElementById('field-body').focus(); return;
       }
+      const next = +btn.dataset.next;
       if (next === 4) populatePreview();
-      showStep(next, 'forward');
+      showStep(next);
     });
   });
 
   document.querySelectorAll('.back-btn').forEach(btn => {
-    btn.addEventListener('click', () => showStep(+btn.dataset.back, 'backward'));
+    btn.addEventListener('click', () => showStep(+btn.dataset.back));
   });
 
   ['field-name', 'field-title'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        const nextBtn = document.querySelector('.form-step.active .next-btn');
-        if (nextBtn) nextBtn.click();
-      }
+      if (e.key === 'Enter') document.querySelector('.form-step.active .next-btn')?.click();
     });
   });
 
@@ -988,19 +961,12 @@ new p5(p => {
 
   // ── OVERLAY OPEN / CLOSE ──────────────────────────────────────────────────────
   function openOverlay() {
-    currentStep = 1;
     document.getElementById('field-name').value  = '';
     document.getElementById('field-body').value  = '';
     document.getElementById('field-title').value = '';
-    formSteps.forEach(s => {
-      s.classList.remove('active');
-      s.style.display = 'none';
-      s.style.opacity = '';
-    });
-    document.querySelectorAll('.form-prompt').forEach(el => el.innerHTML = '');
     p.noLoop();
     overlay.classList.add('open');
-    setTimeout(() => showStep(1), 320);
+    showStep(1);
   }
 
   function closeOverlay() {
