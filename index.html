@@ -130,6 +130,208 @@
       line-height: 1.5;
       color: #888;
     }
+
+    /* ── SHARE BUTTON ──────────────────────────────────────────────────────── */
+    #share-btn {
+      position: fixed;
+      top: 24px;
+      right: 28px;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 24px;
+      border: 0.5px solid rgba(60, 45, 25, 0.6);
+      border-radius: 38px;
+      cursor: pointer;
+      background: transparent;
+      color: #1e1810;
+      font-size: 15px;
+      white-space: nowrap;
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-weight: 400;
+      transition: background 0.25s ease, color 0.25s ease,
+                  border-color 0.25s ease, opacity 0.5s ease,
+                  transform 0.5s ease;
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    #share-btn.visible { opacity: 1; transform: translateY(0); }
+    #share-btn:hover { background: #1e1810; color: #f3ede0; border-color: #1e1810; }
+    #share-btn .btn-arrow { font-size: 13px; }
+
+    /* ── STORY FORM OVERLAY ────────────────────────────────────────────────── */
+    #story-form-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(30, 24, 16, 0.28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #story-form-overlay.open { opacity: 1; pointer-events: auto; }
+    #form-card {
+      position: relative;
+      background: #f3ede0;
+      border-radius: 24px;
+      padding: 52px 60px 48px;
+      width: min(580px, 92vw);
+      box-shadow: 0 8px 48px rgba(30, 24, 16, 0.18);
+    }
+    #form-progress {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .step-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(60, 45, 25, 0.18);
+      transition: background 0.4s ease, transform 0.4s ease;
+    }
+    .step-dot.active { background: rgba(60, 45, 25, 0.70); transform: scale(1.4); }
+
+    #form-well {
+      position: relative;
+    }
+    .form-step {
+      display: none;
+      flex-direction: column;
+      gap: 30px;
+      transition: opacity 0.28s ease;
+    }
+    .form-step.active { display: flex; }
+
+    .form-prompt {
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-size: clamp(22px, 4vw, 34px);
+      font-weight: 400;
+      color: #1e1810;
+      line-height: 1.35;
+      min-height: 2.8em;
+    }
+    .form-prompt .caret {
+      display: inline-block;
+      width: 2px; height: 0.85em;
+      background: #b07a50;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+    .form-field {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(60, 45, 25, 0.25);
+      padding: 10px 4px;
+      font-size: 18px;
+      font-family: -apple-system, sans-serif;
+      color: #1e1810;
+      outline: none;
+      transition: border-color 0.3s ease;
+      caret-color: #b07a50;
+    }
+    .form-field:focus { border-bottom-color: rgba(60, 45, 25, 0.65); }
+    .form-field::placeholder { color: rgba(60, 45, 25, 0.28); font-style: italic; }
+    .form-textarea {
+      resize: none;
+      height: 130px;
+      border: 1px solid rgba(60, 45, 25, 0.25);
+      border-radius: 4px;
+      padding: 12px;
+      line-height: 1.65;
+      background-image: repeating-linear-gradient(
+        transparent,
+        transparent calc(1.65em - 1px),
+        rgba(60, 45, 25, 0.06) calc(1.65em - 1px),
+        rgba(60, 45, 25, 0.06) 1.65em
+      );
+      background-size: 100% 1.65em;
+    }
+    .form-textarea:focus { border-color: rgba(60, 45, 25, 0.55); }
+    .form-hint {
+      font-family: -apple-system, sans-serif;
+      font-size: 12px;
+      color: rgba(60, 45, 25, 0.38);
+      margin-top: -18px;
+      font-style: italic;
+    }
+
+    .form-nav { display: flex; gap: 16px; align-items: center; }
+    .form-nav.center { justify-content: center; }
+    .back-btn {
+      background: none; border: none; cursor: pointer;
+      font-family: -apple-system, sans-serif;
+      font-size: 13px; color: rgba(60, 45, 25, 0.40); padding: 0;
+      transition: color 0.2s ease;
+    }
+    .back-btn:hover { color: #1e1810; }
+    .next-btn {
+      margin-left: auto;
+      padding: 11px 26px;
+      border: 0.5px solid rgba(60, 45, 25, 0.5);
+      border-radius: 38px;
+      background: transparent;
+      cursor: pointer;
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-size: 15px; color: #1e1810;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+    .next-btn:hover { background: #1e1810; color: #f3ede0; }
+
+    #submit-story-btn {
+      padding: 15px 32px;
+      border: 0.5px solid rgba(60, 45, 25, 0.5);
+      border-radius: 38px;
+      background: transparent; cursor: pointer;
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-size: 16px; color: #1e1810;
+      transition: background 0.25s ease, color 0.25s ease,
+                  transform 0.5s ease, box-shadow 0.5s ease;
+    }
+    #submit-story-btn:hover { background: #1e1810; color: #f3ede0; }
+    #submit-story-btn.submitting {
+      transform: scale(1.06);
+      box-shadow: 0 0 0 10px rgba(176, 122, 80, 0.16),
+                  0 0 0 22px rgba(176, 122, 80, 0.07);
+    }
+
+    #story-preview-card {
+      background: #f3ede0;
+      border-radius: 16px;
+      padding: 28px 32px;
+      display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 2px 18px rgba(30, 24, 16, 0.09);
+    }
+    #preview-title-display {
+      font-family: 'Cactus Classical Serif', Georgia, serif;
+      font-size: 18px; color: #1e1810;
+    }
+    #preview-body-display {
+      font-family: -apple-system, sans-serif;
+      font-size: 14px; line-height: 1.7; color: #666;
+      white-space: pre-wrap;
+    }
+    #preview-author-display {
+      font-family: -apple-system, sans-serif;
+      font-size: 12px; color: rgba(60, 45, 25, 0.42);
+      margin-top: 4px; font-style: italic;
+    }
+
+    #form-close {
+      position: absolute; top: 20px; right: 24px;
+      background: none; border: none;
+      font-size: 22px; cursor: pointer;
+      color: rgba(60, 45, 25, 0.30); line-height: 1;
+      transition: color 0.2s ease;
+    }
+    #form-close:hover { color: #1e1810; }
   </style>
 </head>
 <body>
@@ -149,6 +351,69 @@
     <button id="story-close">×</button>
     <h2 id="story-title"></h2>
     <p id="story-body"></p>
+  </div>
+</div>
+
+<button id="share-btn">
+  <span class="btn-label">Share Your Story</span>
+  <span class="btn-arrow">✦</span>
+</button>
+
+<div id="story-form-overlay">
+  <div id="form-card">
+    <button id="form-close">×</button>
+    <div id="form-progress">
+      <span class="step-dot active" data-step="1"></span>
+      <span class="step-dot" data-step="2"></span>
+      <span class="step-dot" data-step="3"></span>
+      <span class="step-dot" data-step="4"></span>
+    </div>
+    <div id="form-well">
+
+      <!-- Step 1 — Name -->
+      <div class="form-step active" data-step="1">
+        <div class="form-prompt" id="prompt-1"></div>
+        <input id="field-name" type="text" class="form-field" placeholder="your name…" autocomplete="off" />
+        <div class="form-nav">
+          <button class="next-btn" data-next="2">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 2 — Story -->
+      <div class="form-step" data-step="2">
+        <div class="form-prompt" id="prompt-2"></div>
+        <textarea id="field-body" class="form-field form-textarea" placeholder="I use AI to…"></textarea>
+        <div class="form-nav">
+          <button class="back-btn" data-back="1">← Back</button>
+          <button class="next-btn" data-next="3">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 3 — Title (optional) -->
+      <div class="form-step" data-step="3">
+        <div class="form-prompt" id="prompt-3"></div>
+        <input id="field-title" type="text" class="form-field" placeholder="a title…" autocomplete="off" />
+        <div class="form-nav">
+          <button class="back-btn" data-back="2">← Back</button>
+          <button class="next-btn" data-next="4">Preview →</button>
+        </div>
+      </div>
+
+      <!-- Step 4 — Preview + submit -->
+      <div class="form-step" data-step="4">
+        <div class="form-prompt" id="prompt-4"></div>
+        <div id="story-preview-card">
+          <div id="preview-title-display"></div>
+          <div id="preview-body-display"></div>
+          <div id="preview-author-display"></div>
+        </div>
+        <div class="form-nav center">
+          <button class="back-btn" data-back="3">← Edit</button>
+          <button id="submit-story-btn">Add my story to the canvas ✦</button>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -394,9 +659,15 @@ new p5(p => {
   const tipBody     = document.getElementById('tip-body');
   let   hoveredBlob = -1;
 
+  const stories = Array.from({ length: 45 }, (_, i) => ({
+    title: `Story ${i + 1}`,
+    body: 'This story is coming soon.',
+    isPlaceholder: true,
+  }));
+
   function openStory(i) {
-    storyTitle.textContent = `Story ${i + 1}`;
-    storyBody.textContent  = 'This story is coming soon.';
+    storyTitle.textContent = stories[i].title;
+    storyBody.textContent  = stories[i].body;
     storyPanel.classList.add('open');
   }
 
@@ -480,7 +751,7 @@ new p5(p => {
       if (hit !== hoveredBlob) {
         hoveredBlob = hit;
         if (hit !== -1) {
-          tipTitle.textContent = `Story ${hit + 1}`;
+          tipTitle.textContent = stories[hit].title;
           blobTooltip.classList.add('visible');
         } else {
           blobTooltip.classList.remove('visible');
@@ -529,6 +800,219 @@ new p5(p => {
     balls.forEach((b, i) => { b.tx = targets[i].x; b.ty = targets[i].y; });
     document.getElementById('enter-btn').style.opacity = '0';
     document.getElementById('enter-btn').style.pointerEvents = 'none';
+    setTimeout(() => {
+      const shareBtn = document.getElementById('share-btn');
+      shareBtn.style.display = 'flex';
+      requestAnimationFrame(() => requestAnimationFrame(() => shareBtn.classList.add('visible')));
+    }, 1600);
+  });
+
+  // ── TYPEWRITER ────────────────────────────────────────────────────────────────
+  function typewriter(el, text, onDone) {
+    el.innerHTML = '';
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    el.appendChild(caret);
+    let i = 0;
+    const BASE = 36;
+    function tick() {
+      if (i < text.length) {
+        el.insertBefore(document.createTextNode(text[i]), caret);
+        i++;
+        const ch = text[i - 1];
+        const delay = /[.,?!—]/.test(ch) ? BASE * 5 : BASE + (Math.random() - 0.5) * 14;
+        setTimeout(tick, delay);
+      } else {
+        caret.remove();
+        if (onDone) onDone();
+      }
+    }
+    tick();
+  }
+
+  // ── MULTI-STEP FORM ───────────────────────────────────────────────────────────
+  const overlay   = document.getElementById('story-form-overlay');
+  const formSteps = document.querySelectorAll('.form-step');
+  const stepDots  = document.querySelectorAll('.step-dot');
+  const PROMPTS   = [
+    null,
+    "What's your name?",
+    "How do you use AI?",
+    "Give it a title.",
+    "Here's your story.",
+  ];
+  const TITLE_SUGGESTIONS = [
+    "How AI became my quiet collaborator",
+    "The hour I get back every day",
+    "A new kind of thinking partner",
+    "Finding flow with a little help",
+  ];
+  let currentStep = 1;
+
+  function showStep(n) {
+    const prev = document.querySelector('.form-step.active');
+    const next = document.querySelector(`.form-step[data-step="${n}"]`);
+    if (!next || next === prev) return;
+    currentStep = n;
+
+    const doShow = () => {
+      if (prev) {
+        prev.classList.remove('active');
+        prev.style.opacity = '';
+        prev.style.display = 'none';
+      }
+      next.style.opacity = '0';
+      next.style.display = 'flex';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        next.classList.add('active');
+        next.style.opacity = '1';
+      }));
+      stepDots.forEach(d => d.classList.toggle('active', +d.dataset.step === n));
+      const promptEl = document.getElementById(`prompt-${n}`);
+      if (promptEl && PROMPTS[n]) typewriter(promptEl, PROMPTS[n]);
+      const field = next.querySelector('.form-field');
+      if (field) setTimeout(() => field.focus(), 350);
+    };
+
+    if (prev) {
+      prev.style.opacity = '0';
+      setTimeout(doShow, 300);
+    } else {
+      doShow();
+    }
+  }
+
+  // ── NAV ───────────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.next-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const next = +btn.dataset.next;
+      if (currentStep === 1 && !document.getElementById('field-name').value.trim()) {
+        document.getElementById('field-name').focus(); return;
+      }
+      if (currentStep === 2 && !document.getElementById('field-body').value.trim()) {
+        document.getElementById('field-body').focus(); return;
+      }
+      if (next === 4) populatePreview();
+      showStep(next, 'forward');
+    });
+  });
+
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', () => showStep(+btn.dataset.back, 'backward'));
+  });
+
+  ['field-name', 'field-title'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const nextBtn = document.querySelector('.form-step.active .next-btn');
+        if (nextBtn) nextBtn.click();
+      }
+    });
+  });
+
+  // ── PREVIEW ───────────────────────────────────────────────────────────────────
+  function populatePreview() {
+    const name  = document.getElementById('field-name').value.trim();
+    const body  = document.getElementById('field-body').value.trim();
+    let   title = document.getElementById('field-title').value.trim();
+    if (!title) {
+      const words = body.split(/\s+/).slice(0, 6).join(' ');
+      title = words.split(/\s+/).length > 3
+        ? words + (words.endsWith('.') ? '' : '…')
+        : TITLE_SUGGESTIONS[Math.floor(Math.random() * TITLE_SUGGESTIONS.length)];
+      document.getElementById('field-title').value = title;
+    }
+    document.getElementById('preview-title-display').textContent  = title;
+    document.getElementById('preview-body-display').textContent   = body;
+    document.getElementById('preview-author-display').textContent = `— ${name}`;
+  }
+
+  // ── BLOB FLASH ────────────────────────────────────────────────────────────────
+  function flashBlob(idx) {
+    const b = balls[idx];
+    if (!b) return;
+    const origR = b.baseR;
+    b.baseR = origR * 1.65;
+    let t = 0;
+    const spring = setInterval(() => {
+      t++;
+      b.baseR = origR * (1.65 - 0.65 * (t / 22));
+      if (t >= 22) { b.baseR = origR; clearInterval(spring); }
+    }, 28);
+  }
+
+  // ── SPAWN NEW BALL (overflow: all 45 slots filled) ───────────────────────────
+  function spawnNewBall(title, body, name) {
+    const newIdx = balls.length;
+    const nb     = new Ball(newIdx);
+    nb.x = W * 0.5 + (Math.random() - 0.5) * 60;
+    nb.y = H + 90;
+    nb.color = COLORS[newIdx % COLORS.length];
+    const angle = Math.random() * Math.PI * 2;
+    nb.tx = W * 0.5 + Math.cos(angle) * Math.min(W, H) * 0.28;
+    nb.ty = H * 0.5 + Math.sin(angle) * Math.min(W, H) * 0.28;
+    nb.vx = 0; nb.vy = -2.5;
+    balls.push(nb);
+    stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false });
+    if (mode === 'grid') {
+      mode = 'transitioning';
+      setTimeout(() => { mode = 'grid'; }, 2200);
+    }
+  }
+
+  // ── SUBMIT ────────────────────────────────────────────────────────────────────
+  document.getElementById('submit-story-btn').addEventListener('click', () => {
+    const submitBtn = document.getElementById('submit-story-btn');
+    const name      = document.getElementById('field-name').value.trim();
+    const body      = document.getElementById('field-body').value.trim();
+    const title     = document.getElementById('field-title').value.trim()
+                    || document.getElementById('preview-title-display').textContent;
+
+    const slotIndex = stories.findIndex(s => s.isPlaceholder);
+    if (slotIndex !== -1) {
+      stories[slotIndex] = { title, body: body + '\n\n— ' + name, isPlaceholder: false };
+      flashBlob(slotIndex);
+    } else {
+      spawnNewBall(title, body, name);
+    }
+
+    submitBtn.classList.add('submitting');
+    submitBtn.textContent = 'Finding its place…';
+
+    setTimeout(() => {
+      submitBtn.classList.remove('submitting');
+      submitBtn.textContent = 'Add my story to the canvas ✦';
+      closeOverlay();
+    }, 1900);
+  });
+
+  // ── OVERLAY OPEN / CLOSE ──────────────────────────────────────────────────────
+  function openOverlay() {
+    currentStep = 1;
+    document.getElementById('field-name').value  = '';
+    document.getElementById('field-body').value  = '';
+    document.getElementById('field-title').value = '';
+    formSteps.forEach(s => {
+      s.classList.remove('active');
+      s.style.display = 'none';
+      s.style.opacity = '';
+    });
+    document.querySelectorAll('.form-prompt').forEach(el => el.innerHTML = '');
+    p.noLoop();
+    overlay.classList.add('open');
+    setTimeout(() => showStep(1), 320);
+  }
+
+  function closeOverlay() {
+    overlay.classList.remove('open');
+    setTimeout(() => { p.loop(); }, 420);
+  }
+
+  document.getElementById('share-btn').addEventListener('click', openOverlay);
+  document.getElementById('form-close').addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeOverlay(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay();
   });
 });
 </script>
