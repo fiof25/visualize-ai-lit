@@ -77,7 +77,7 @@ export default function Home() {
               </div>
               <div className="form-nav">
                 <button className="back-btn" data-back="3">← Edit</button>
-                <button id="submit-story-btn">Add my story to the canvas ✦</button>
+                <button id="submit-story-btn">Add to canvas</button>
               </div>
             </div>
           </div>

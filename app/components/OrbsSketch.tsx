@@ -398,7 +398,7 @@ export default function OrbsSketch() {
             submitBtn.textContent = 'Finding its place…';
             setTimeout(() => {
               submitBtn.classList.remove('submitting');
-              submitBtn.textContent = 'Add my story to the canvas ✦';
+              submitBtn.textContent = 'Add to canvas';
               closeOverlay();
             }, 1900);
           });
