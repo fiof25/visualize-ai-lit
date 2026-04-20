@@ -1,0 +1,88 @@
+import dynamic from 'next/dynamic';
+
+const OrbsSketch = dynamic(() => import('./components/OrbsSketch'), { ssr: false });
+
+export default function Home() {
+  return (
+    <>
+      <div id="cursor" />
+
+      <a id="enter-btn" href="#">
+        <span className="btn-label">Enter Platform</span>
+        <span className="btn-arrow">→</span>
+      </a>
+
+      <div id="blob-tooltip">
+        <div className="tip-title" id="tip-title" />
+        <div className="tip-body" id="tip-body" />
+      </div>
+
+      <div id="story-panel">
+        <div id="story-inner">
+          <button id="story-close">×</button>
+          <h2 id="story-title" />
+          <p id="story-body" />
+        </div>
+      </div>
+
+      <button id="share-btn">
+        <span className="btn-label">Share Your Story</span>
+        <span className="btn-arrow">✦</span>
+      </button>
+
+      <div id="story-form-overlay">
+        <div id="form-card">
+          <button id="form-close">×</button>
+          <div id="form-progress">
+            <span className="step-dot active" data-step="1" />
+            <span className="step-dot" data-step="2" />
+            <span className="step-dot" data-step="3" />
+            <span className="step-dot" data-step="4" />
+          </div>
+          <div id="form-well">
+            <div className="form-step active" data-step="1">
+              <div className="form-prompt" id="prompt-1" />
+              <input id="field-name" type="text" className="form-field" autoComplete="off" />
+              <div className="form-nav">
+                <button className="next-btn" data-next="2">Continue →</button>
+              </div>
+            </div>
+
+            <div className="form-step" data-step="2">
+              <div className="form-prompt" id="prompt-2" />
+              <textarea id="field-body" className="form-field form-textarea" />
+              <div className="form-nav">
+                <button className="back-btn" data-back="1">← Back</button>
+                <button className="next-btn" data-next="3">Continue →</button>
+              </div>
+            </div>
+
+            <div className="form-step" data-step="3">
+              <div className="form-prompt" id="prompt-3" />
+              <input id="field-title" type="text" className="form-field" autoComplete="off" />
+              <div className="form-nav">
+                <button className="back-btn" data-back="2">← Back</button>
+                <button className="next-btn" data-next="4">Preview →</button>
+              </div>
+            </div>
+
+            <div className="form-step" data-step="4">
+              <div className="form-prompt" id="prompt-4" />
+              <div id="story-preview-card">
+                <div id="preview-title-display" />
+                <div id="preview-body-display" />
+                <div id="preview-author-display" />
+              </div>
+              <div className="form-nav">
+                <button className="back-btn" data-back="3">← Edit</button>
+                <button id="submit-story-btn">Add my story to the canvas ✦</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <OrbsSketch />
+    </>
+  );
+}
