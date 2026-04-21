@@ -11,6 +11,18 @@ canvas { display: block; }
 }
 #cursor.big { width: 28px; height: 28px; background: rgba(60, 45, 25, 0.07); }
 
+#profile-btn {
+  position: fixed; top: 24px; left: 28px; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; padding: 0;
+  border: 1.5px solid rgba(60, 45, 25, 0.4); border-radius: 50%;
+  cursor: pointer; background: transparent; color: #1e1810;
+  text-decoration: none;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+#profile-btn:hover { background: rgba(60, 45, 25, 0.08); border-color: rgba(60, 45, 25, 0.6); }
+#profile-btn .btn-label { display: none; }
+
 #enter-btn {
   position: fixed;
   top: 50%; left: 50%;
@@ -63,14 +75,14 @@ body.grid-mode canvas { cursor: pointer; }
 #share-btn {
   position: fixed; top: 24px; right: 28px; z-index: 100;
   display: none; align-items: center; gap: 9px; padding: 13px 24px;
-  border: 0.5px solid rgba(60, 45, 25, 0.6); border-radius: 38px;
-  cursor: pointer; background: transparent; color: #1e1810; font-size: 15px;
+  border: 0.5px solid #1e1810; border-radius: 38px;
+  cursor: pointer; background: #1e1810; color: #f3ede0; font-size: 15px;
   white-space: nowrap; font-family: 'Cactus Classical Serif', Georgia, serif; font-weight: 400;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, opacity 0.5s ease, transform 0.5s ease;
   opacity: 0; transform: translateY(-8px);
 }
 #share-btn.visible { opacity: 1; transform: translateY(0); }
-#share-btn:hover { background: #1e1810; color: #f3ede0; border-color: #1e1810; }
+#share-btn:hover { background: transparent; color: #1e1810; border-color: #1e1810; }
 #share-btn .btn-arrow { font-size: 13px; }
 
 #story-form-overlay {
