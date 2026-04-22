@@ -98,7 +98,7 @@ export default function OrgDashboard() {
         .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: #e8e1d4; border-right: 1px solid rgba(60,45,25,0.1); display: flex; flex-direction: column; padding: 32px 0; z-index: 10; }
         .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid rgba(60,45,25,0.1); }
         .sidebar-logo h1 { font-family: 'Cactus Classical Serif', Georgia, serif; font-size: 15px; font-weight: 400; color: #1e1810; line-height: 1.4; margin: 0; }
-        .sidebar-logo p { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(30,24,16,0.4); margin: 4px 0 0; }
+        .sidebar-logo p { font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(30,24,16,0.4); margin: 4px 0 0; }
         .sidebar-nav { padding: 20px 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
         .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; color: rgba(30,24,16,0.55); cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background 0.15s, color 0.15s; }
         .nav-item:hover { background: rgba(60,45,25,0.06); color: #1e1810; }
@@ -109,55 +109,52 @@ export default function OrgDashboard() {
         .back-link:hover { color: #1e1810; background: rgba(60,45,25,0.06); }
 
         /* Main */
-        .main { margin-left: 220px; padding: 48px 52px 80px; }
-        .page-header { margin-bottom: 40px; }
-        .page-eyebrow { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(30,24,16,0.4); margin-bottom: 8px; }
-        .page-title { font-family: 'Cactus Classical Serif', Georgia, serif; font-size: clamp(30px, 3.5vw, 44px); font-weight: 400; color: #1e1810; margin: 0 0 6px; }
-        .page-subtitle { font-size: 13px; color: rgba(30,24,16,0.45); }
+        .main { margin-left: 220px; padding: 40px 48px 80px; }
+        .page-header { margin-bottom: 16px; display: flex; align-items: baseline; justify-content: space-between; }
+        .page-header-left {}
+        .page-eyebrow { font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(30,24,16,0.38); margin-bottom: 4px; }
+        .page-title { font-family: 'Cactus Classical Serif', Georgia, serif; font-size: 26px; font-weight: 400; color: #1e1810; margin: 0 0 3px; }
+        .page-subtitle { font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(30,24,16,0.4); }
 
         /* Stat pills */
-        .stat-row { display: flex; gap: 10px; margin-bottom: 36px; flex-wrap: wrap; }
-        .stat-pill { display: flex; align-items: center; gap: 8px; padding: 8px 16px 8px 12px; background: rgba(248,244,236,0.7); border: 1px solid rgba(60,45,25,0.12); border-radius: 38px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .stat-row { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-pill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(248,244,236,0.7); border: 1px solid rgba(60,45,25,0.12); border-radius: 38px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
         .stat-pill:hover { border-color: rgba(60,45,25,0.28); }
         .stat-pill.active { background: #1e1810; border-color: #1e1810; }
         .stat-pill.active .pill-label, .stat-pill.active .pill-count { color: #f3ede0; }
-        .pill-swatch { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .pill-label { font-size: 12px; color: rgba(30,24,16,0.6); letter-spacing: 0.03em; }
-        .pill-count { font-family: 'Cactus Classical Serif', Georgia, serif; font-size: 15px; color: #1e1810; margin-left: 2px; }
+        .pill-swatch { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .pill-label { font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(30,24,16,0.6); }
+        .pill-count { font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace; font-size: 10px; color: rgba(30,24,16,0.4); }
 
         /* Cards */
-        .card-list { display: flex; flex-direction: column; gap: 12px; }
-        .story-card { background: #f5f0e8; border: 1px solid rgba(60,45,25,0.11); border-radius: 18px; overflow: hidden; transition: border-color 0.3s, opacity 0.4s, box-shadow 0.2s; }
-        .story-card:hover { box-shadow: 0 4px 24px rgba(30,24,16,0.06); }
-        .story-card.approved { border-color: rgba(16,185,129,0.4); }
+        .card-list { display: flex; flex-direction: column; gap: 15px; }
+        .story-card { display: flex; flex-direction: column; transition: opacity 0.4s; }
         .story-card.declined { opacity: 0.45; }
-        .card-inner { display: grid; grid-template-columns: 1fr auto; }
-        .card-body { padding: 26px 30px; }
-        .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
-        .card-title { font-family: 'Cactus Classical Serif', Georgia, serif; font-size: 20px; font-weight: 400; color: #1e1810; margin: 0; flex: 1; line-height: 1.3; }
-        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-        .tag { font-size: 11px; padding: 3px 10px; border-radius: 38px; letter-spacing: 0.02em; font-weight: 500; white-space: nowrap; }
-        .card-text { font-size: 13px; line-height: 1.75; color: rgba(30,24,16,0.62); margin: 0 0 14px; }
-        .card-meta { display: flex; align-items: center; gap: 16px; }
-        .meta-author { font-size: 11px; color: rgba(30,24,16,0.35); display: flex; align-items: center; gap: 5px; }
+        .card-body { background: #f6f0e7; border: 1px solid #ded6c4; padding: 24px 32px; display: flex; flex-direction: column; gap: 12px; }
+        .story-card.approved .card-body { border-color: rgba(16,185,129,0.4); }
+        .card-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .card-title { font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 21px; font-weight: 400; color: #000; margin: 0; line-height: normal; }
+        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tag { font-size: 12px; padding: 5px 13px; border-radius: 38px; letter-spacing: 0.02em; font-weight: 500; white-space: nowrap; }
+        .card-text { font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.65; color: #6b6965; margin: 0; }
+        .card-meta { display: flex; align-items: center; gap: 16px; padding-top: 4px; width: 100%; }
+        .meta-author { font-family: 'SF Mono', 'Fira Mono', 'Courier New', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(30,24,16,0.55); display: flex; align-items: center; gap: 5px; }
         .meta-dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(30,24,16,0.2); }
         .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 9px; border-radius: 38px; font-weight: 500; letter-spacing: 0.03em; }
         .status-badge.approved { background: rgba(16,185,129,0.12); color: #047857; }
         .status-badge.declined { background: rgba(239,68,68,0.1); color: #b91c1c; }
 
-        /* Card panel */
-        .card-panel { width: 196px; border-left: 1px solid rgba(60,45,25,0.09); padding: 26px 22px; display: flex; flex-direction: column; gap: 16px; flex-shrink: 0; }
-        .panel-label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(30,24,16,0.35); margin: 0; }
-        .vis-toggle { display: flex; border: 1px solid rgba(60,45,25,0.15); border-radius: 8px; overflow: hidden; }
-        .vis-btn { flex: 1; padding: 8px 0; font-size: 12px; font-family: 'Cactus Classical Serif', Georgia, serif; border: none; cursor: pointer; transition: background 0.18s, color 0.18s; background: transparent; color: rgba(30,24,16,0.45); }
-        .vis-btn.on { background: #1e1810; color: #f3ede0; }
+        .card-controls-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+        .vis-toggle { display: flex; border: 0.5px solid #d8cfbc; overflow: hidden; }
+        .vis-btn { padding: 8px 12px; font-size: 11.421px; font-family: 'Cactus Classical Serif', Georgia, serif; border: none; border-right: 0.5px solid #eae4d6; cursor: pointer; transition: background 0.18s; background: transparent; color: #000; white-space: nowrap; }
+        .vis-btn:last-child { border-right: none; }
+        .vis-btn.on { background: #d8cfbc; }
         .vis-btn:disabled { cursor: default; opacity: 0.4; }
-        .panel-actions { display: flex; flex-direction: column; gap: 7px; margin-top: auto; }
-        .btn-approve { padding: 10px; font-size: 12px; font-family: 'Cactus Classical Serif', Georgia, serif; background: #1e1810; color: #f3ede0; border: none; border-radius: 10px; cursor: pointer; transition: opacity 0.18s; letter-spacing: 0.02em; }
+        .btn-approve { padding: 8px 12px; font-size: 11.421px; font-family: 'Cactus Classical Serif', Georgia, serif; background: #000; color: #fff; border: 0.5px solid #000; cursor: pointer; transition: opacity 0.18s; white-space: nowrap; }
         .btn-approve:hover { opacity: 0.85; }
-        .btn-decline { padding: 10px; font-size: 12px; font-family: 'Cactus Classical Serif', Georgia, serif; background: transparent; color: rgba(30,24,16,0.45); border: 1px solid rgba(60,45,25,0.18); border-radius: 10px; cursor: pointer; transition: border-color 0.18s, color 0.18s; }
-        .btn-decline:hover { border-color: rgba(60,45,25,0.4); color: #1e1810; }
-        .btn-undo { padding: 10px; font-size: 12px; font-family: 'Cactus Classical Serif', Georgia, serif; background: transparent; color: rgba(30,24,16,0.35); border: 1px dashed rgba(60,45,25,0.2); border-radius: 10px; cursor: pointer; }
+        .btn-decline { display: flex; align-items: center; justify-content: center; padding: 8px; background: transparent; color: rgba(30,24,16,0.35); border: 0.5px solid #d8cfbc; cursor: pointer; transition: border-color 0.18s, color 0.18s; }
+        .btn-decline:hover { border-color: rgba(60,45,25,0.4); color: #b91c1c; }
+        .btn-undo { padding: 8px 12px; font-size: 11.421px; font-family: 'Cactus Classical Serif', Georgia, serif; background: transparent; color: rgba(30,24,16,0.35); border: 0.5px dashed #d8cfbc; cursor: pointer; white-space: nowrap; }
 
         /* Empty */
         .empty { text-align: center; padding: 80px 0; color: rgba(30,24,16,0.3); font-family: 'Cactus Classical Serif', Georgia, serif; font-size: 18px; }
@@ -196,9 +193,9 @@ export default function OrgDashboard() {
         {/* Main */}
         <main className="main">
           <div className="page-header">
-            <p className="page-eyebrow">Use Case Review</p>
-            <h2 className="page-title">AI Use Case Responses</h2>
-            <p className="page-subtitle">{counts.pending} submission{counts.pending !== 1 ? 's' : ''} awaiting review</p>
+            <div className="page-header-left">
+              <h2 className="page-title">AI Use Case Responses</h2>
+            </div>
           </div>
 
           {/* Filter pills */}
@@ -232,44 +229,36 @@ export default function OrgDashboard() {
               const risk = RISK_CONFIG[story.risk];
               return (
                 <div key={story.id} className={`story-card ${s !== 'pending' ? s : ''}`}>
-                  <div className="card-inner">
-                    {/* Left */}
-                    <div className="card-body">
-                      <div className="card-top">
-                        <h3 className="card-title">{story.title}</h3>
-                        <div className="card-tags">
-                          <span className="tag" style={{ background: risk.bg, color: risk.text }}>
-                            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: risk.dot, marginRight: 5, verticalAlign: 'middle' }} />
-                            {risk.label}
-                          </span>
-                          <span className="tag" style={{ background: DOMAIN_COLOR[story.domain] ?? 'rgba(60,45,25,0.07)', color: DOMAIN_TEXT[story.domain] ?? '#1e1810' }}>
-                            {story.domain}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="card-text">{story.body}</p>
-                      <div className="card-meta">
-                        <span className="meta-author">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                          </svg>
-                          {story.author}
+                  {/* Card body */}
+                  <div className="card-body">
+                    <div className="card-top">
+                      <h3 className="card-title">{story.title}</h3>
+                      <div className="card-tags">
+                        <span className="tag" style={{ background: risk.bg, color: risk.text }}>
+                          {risk.label}
                         </span>
-                        <span className="meta-dot" />
-                        <span className="meta-author">{story.date}</span>
-                        {s !== 'pending' && (
-                          <span className={`status-badge ${s}`}>
-                            {s === 'approved' ? '✓ Published' : '✕ Declined'}
-                          </span>
-                        )}
+                        <span className="tag" style={{ background: DOMAIN_COLOR[story.domain] ?? 'rgba(60,45,25,0.07)', color: DOMAIN_TEXT[story.domain] ?? '#1e1810' }}>
+                          {story.domain}
+                        </span>
                       </div>
                     </div>
-
-                    {/* Right panel */}
-                    <div className="card-panel">
-                      <div>
-                        <p className="panel-label">Visibility</p>
-                        <div className="vis-toggle" style={{ marginTop: 8 }}>
+                    <p className="card-text">{story.body}</p>
+                    <div className="card-meta">
+                      <span className="meta-author">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                        </svg>
+                        {story.author}
+                      </span>
+                      <span className="meta-dot" />
+                      <span className="meta-author">{story.date}</span>
+                      {s !== 'pending' && (
+                        <span className={`status-badge ${s}`}>
+                          {s === 'approved' ? '✓ Published' : '✕ Declined'}
+                        </span>
+                      )}
+                      <div className="card-controls-right">
+                        <div className="vis-toggle">
                           <button
                             className={`vis-btn ${v === 'private' ? 'on' : ''}`}
                             onClick={() => setVisibility(prev => ({ ...prev, [story.id]: 'private' }))}
@@ -281,16 +270,15 @@ export default function OrgDashboard() {
                             disabled={s === 'declined'}
                           >Public</button>
                         </div>
-                      </div>
-
-                      <div className="panel-actions">
                         {s === 'pending' ? (
                           <>
                             <button className="btn-approve" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'approved' }))}>
-                              Approve & Publish
+                              Approve and publish
                             </button>
-                            <button className="btn-decline" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'declined' }))}>
-                              Decline
+                            <button className="btn-decline" title="Decline" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'declined' }))}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                              </svg>
                             </button>
                           </>
                         ) : (
