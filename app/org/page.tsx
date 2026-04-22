@@ -130,7 +130,7 @@ export default function OrgDashboard() {
         .story-card.declined { opacity: 0.45; }
         .card-body { background: #f6f0e7; border: 1px solid #ded6c4; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
         .story-card.approved .card-body { border-color: rgba(16,185,129,0.4); }
-        .card-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .card-top { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
         .card-title { font-family: 'Cactus Classical Serif', Georgia, serif; font-size: 18px; font-weight: 400; color: #1e1810; margin: 0; line-height: normal; }
         .card-tags { display: flex; gap: 10px; flex-wrap: wrap; }
         .tag { font-size: 11px; padding: 4px 11px; border-radius: 38px; letter-spacing: 0.02em; font-weight: 500; white-space: nowrap; }
