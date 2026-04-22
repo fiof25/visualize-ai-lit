@@ -201,11 +201,28 @@ export default function OrbsSketch() {
           return positions;
         }
 
-        const stories = Array.from({ length: 45 }, (_, i) => ({
-          title: `Story ${i + 1}`,
-          body: 'This story is coming soon.',
-          isPlaceholder: true,
-        }));
+        const stories = [
+          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false },
+          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false },
+          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false },
+          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false },
+          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false },
+          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false },
+          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false },
+          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false },
+          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false },
+          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false },
+          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false },
+          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false },
+          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false },
+          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false },
+          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false },
+          ...Array.from({ length: 30 }, (_, i) => ({
+            title: `Story ${i + 16}`,
+            body: 'This story is coming soon.',
+            isPlaceholder: true,
+          })),
+        ];
 
         function openStory(i: number) {
           const storyTitle = document.getElementById('story-title');
