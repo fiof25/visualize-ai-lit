@@ -56,18 +56,18 @@ const STORIES: Story[] = [
 ];
 
 const RISK_CONFIG = {
-  high:   { label: 'High Risk',   dot: '#ef4444', bg: 'rgba(239,68,68,0.08)',   text: '#c0392b' },
-  medium: { label: 'Medium Risk', dot: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  text: '#b45309' },
-  low:    { label: 'Low Risk',    dot: '#10b981', bg: 'rgba(16,185,129,0.08)',   text: '#047857' },
+  high:   { label: 'High Risk',   dot: '#be7662', bg: 'rgba(190,118,98,0.10)',  text: '#8a4f3d' },
+  medium: { label: 'Medium Risk', dot: '#c6a25f', bg: 'rgba(198,162,95,0.12)',  text: '#7a6030' },
+  low:    { label: 'Low Risk',    dot: '#649478', bg: 'rgba(100,148,120,0.10)', text: '#3a6b54' },
 };
 
 const DOMAIN_COLOR: Record<string, string> = {
-  Healthcare: 'rgba(14,165,233,0.12)',
-  Corporate:  'rgba(139,92,246,0.10)',
+  Healthcare: 'rgba(108,135,178,0.12)',
+  Corporate:  'rgba(195,148,175,0.12)',
 };
 const DOMAIN_TEXT: Record<string, string> = {
-  Healthcare: '#0369a1',
-  Corporate:  '#6d28d9',
+  Healthcare: '#4a6491',
+  Corporate:  '#8a5578',
 };
 
 export default function OrgDashboard() {
@@ -202,9 +202,9 @@ export default function OrgDashboard() {
             <div className="stat-row">
               {([
                 { key: 'all',      label: 'All',      swatch: '#1e1810' },
-                { key: 'pending',  label: 'Pending',  swatch: '#f59e0b' },
-                { key: 'approved', label: 'Approved', swatch: '#10b981' },
-                { key: 'declined', label: 'Declined', swatch: '#ef4444' },
+                { key: 'pending',  label: 'Pending',  swatch: '#c6a25f' },
+                { key: 'approved', label: 'Approved', swatch: '#649478' },
+                { key: 'declined', label: 'Declined', swatch: '#be7662' },
               ] as { key: FilterTab; label: string; swatch: string }[]).map(({ key, label, swatch }) => (
                 <div
                   key={key}
