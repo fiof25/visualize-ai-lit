@@ -8,10 +8,12 @@
     "start": "next start"
   },
   "dependencies": {
+    "dialkit": "^1.2.0",
+    "motion": "^12.38.0",
     "next": "^15.0.0",
+    "p5": "^1.9.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "p5": "^1.9.4"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

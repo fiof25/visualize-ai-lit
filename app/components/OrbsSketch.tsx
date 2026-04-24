@@ -1,9 +1,28 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useDialKit } from 'dialkit';
+
+const BASE_COUNT = 45;
+const BASE_RADIUS = 48;
+
+function computeBaseR(count: number) {
+  return BASE_RADIUS * Math.sqrt(BASE_COUNT / count);
+}
 
 export default function OrbsSketch() {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const params = useDialKit('Canvas', {
+    dots: {
+      type: 'select',
+      options: ['45', '100', '200'],
+      default: '45',
+    },
+  });
+
+  const dotCountRef = useRef(BASE_COUNT);
+  dotCountRef.current = Number(params.dots) || BASE_COUNT;
 
   useEffect(() => {
     let p5Instance: InstanceType<typeof import('p5')> | null = null;
@@ -28,6 +47,7 @@ export default function OrbsSketch() {
         let simT = 0;
         let mode: 'freeform' | 'transitioning' | 'grid' = 'freeform';
         let hoveredBlob = -1;
+        let prevDotCount = dotCountRef.current;
 
         function wrand() {
           const x = p.random();
@@ -86,8 +106,8 @@ export default function OrbsSketch() {
           baseR: number; r: number;
           tx = 0; ty = 0;
 
-          constructor(i: number) {
-            const ang = (i / 50) * Math.PI * 2 + Math.random() * 0.9;
+          constructor(i: number, total: number) {
+            const ang = (i / total) * Math.PI * 2 + Math.random() * 0.9;
             const spread = 0.18 + Math.random() * 0.62;
             this.x = W * 0.5 + Math.cos(ang) * W * spread;
             this.y = H * 0.5 + Math.sin(ang) * H * spread * 0.75;
@@ -97,7 +117,7 @@ export default function OrbsSketch() {
             this.phase = Math.random() * Math.PI * 2;
             this.wobble = 0.35 + Math.random() * 0.9;
             this.pulseT = Math.random() * Math.PI * 2;
-            this.baseR = 48;
+            this.baseR = computeBaseR(total);
             this.r = this.baseR;
           }
 
@@ -186,22 +206,24 @@ export default function OrbsSketch() {
           }
         }
 
-        function computeGridPositions() {
-          const cols = 9, rows = 5;
-          const padX = W * 0.10, padY = H * 0.15;
+        function computeGridPositions(count: number) {
+          const aspect = W / H;
+          const cols = Math.max(2, Math.round(Math.sqrt(count * aspect)));
+          const rows = Math.ceil(count / cols);
+          const padX = W * 0.08;
+          const padY = H * 0.12;
           const positions: { x: number; y: number }[] = [];
-          for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-              positions.push({
-                x: padX + (c / (cols - 1)) * (W - padX * 2),
-                y: padY + (r / (rows - 1)) * (H - padY * 2),
-              });
-            }
+          const colStep = cols > 1 ? (W - padX * 2) / (cols - 1) : 0;
+          const rowStep = rows > 1 ? (H - padY * 2) / (rows - 1) : 0;
+          for (let i = 0; i < count; i++) {
+            const c = i % cols;
+            const r = Math.floor(i / cols);
+            positions.push({ x: padX + c * colStep, y: padY + r * rowStep });
           }
           return positions;
         }
 
-        const stories = [
+        const REAL_STORIES = [
           { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false },
           { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false },
           { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false },
@@ -217,12 +239,17 @@ export default function OrbsSketch() {
           { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false },
           { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false },
           { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false },
-          ...Array.from({ length: 30 }, (_, i) => ({
-            title: `Story ${i + 16}`,
-            body: 'This story is coming soon.',
-            isPlaceholder: true,
-          })),
         ];
+
+        function buildStories(count: number) {
+          const arr = [...REAL_STORIES];
+          while (arr.length < count) {
+            arr.push({ title: `Story ${arr.length + 1}`, body: 'This story is coming soon.', isPlaceholder: true });
+          }
+          return arr.slice(0, count);
+        }
+
+        let stories = buildStories(dotCountRef.current);
 
         function openStory(i: number) {
           const storyTitle = document.getElementById('story-title');
@@ -319,7 +346,7 @@ export default function OrbsSketch() {
 
         function spawnNewBall(title: string, body: string, name: string) {
           const newIdx = balls.length;
-          const nb = new Ball(newIdx);
+          const nb = new Ball(newIdx, balls.length + 1);
           nb.x = W * 0.5 + (Math.random() - 0.5) * 60;
           nb.y = H + 90;
           nb.color = COLORS[newIdx % COLORS.length];
@@ -354,17 +381,33 @@ export default function OrbsSketch() {
           setTimeout(() => { p.loop(); }, 420);
         }
 
+        function reinitBalls(count: number) {
+          const r = computeBaseR(count);
+          balls = Array.from({ length: count }, (_, i) => {
+            const b = new Ball(i, count);
+            b.baseR = r;
+            b.r = r;
+            return b;
+          });
+          stories = buildStories(count);
+          if (mode !== 'freeform') {
+            const targets = computeGridPositions(count);
+            balls.forEach((b, i) => { b.tx = targets[i].x; b.ty = targets[i].y; });
+            mode = 'transitioning';
+          }
+        }
+
         p.setup = () => {
           W = window.innerWidth; H = window.innerHeight;
           p.createCanvas(W, H);
           p.background(PR, PG, PB);
-          balls = Array.from({ length: 45 }, (_, i) => new Ball(i));
+          const initCount = dotCountRef.current;
+          balls = Array.from({ length: initCount }, (_, i) => new Ball(i, initCount));
           for (let i = 0; i < 500; i++) {
             balls.forEach(b => b.tick(i * 0.001, -9999, -9999));
             for (let s = 0; s < 3; s++) resolveAll();
           }
 
-          // Wire up DOM events after setup
           document.getElementById('story-close')?.addEventListener('click', () => {
             document.getElementById('story-panel')?.classList.remove('open');
           });
@@ -434,7 +477,7 @@ export default function OrbsSketch() {
             e.preventDefault(); e.stopPropagation();
             if (mode !== 'freeform') return;
             mode = 'transitioning';
-            const targets = computeGridPositions();
+            const targets = computeGridPositions(balls.length);
             balls.forEach((b, i) => { b.tx = targets[i].x; b.ty = targets[i].y; });
             const enterBtn = document.getElementById('enter-btn')!;
             enterBtn.style.opacity = '0';
@@ -454,6 +497,12 @@ export default function OrbsSketch() {
         };
 
         p.draw = () => {
+          // Sync dot count from React
+          if (prevDotCount !== dotCountRef.current) {
+            prevDotCount = dotCountRef.current;
+            reinitBalls(dotCountRef.current);
+          }
+
           (p.blendMode as (m: unknown) => void)(p.BLEND);
           p.noStroke();
           (p as unknown as { fill: (...args: number[]) => void }).fill(PR, PG, PB, 6);
