@@ -229,9 +229,8 @@ body.grid-mode canvas { cursor: pointer; }
   transform: translateX(-50%) translateY(-6px);
   z-index: 100;
   display: none; align-items: center;
-  border: 0.5px solid rgba(30, 24, 16, 0.15); border-radius: 38px;
-  background: rgba(243, 237, 224, 0.30);
-  backdrop-filter: blur(12px);
+  border: 0.5px solid rgba(30, 24, 16, 0.8); border-radius: 38px;
+  background: rgb(243, 237, 224);
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.5s ease, transform 0.5s ease;
