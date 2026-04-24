@@ -58,7 +58,7 @@ export default function OrbsSketch() {
             setTimeout(() => {
               label.textContent = VIEWS[idx].label;
               label.style.opacity = '1';
-            }, 100);
+            }, 60);
           }
         }
 
@@ -416,6 +416,10 @@ export default function OrbsSketch() {
             b.r = r;
             return b;
           });
+          for (let i = 0; i < 500; i++) {
+            balls.forEach(b => b.tick(i * 0.001, -9999, -9999));
+            for (let s = 0; s < 3; s++) resolveAll();
+          }
           stories = buildStories(count);
           if (mode !== 'freeform') {
             const targets = computeGridPositions(count);

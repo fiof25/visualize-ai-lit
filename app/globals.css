@@ -229,8 +229,8 @@ body.grid-mode canvas { cursor: pointer; }
   transform: translateX(-50%) translateY(-6px);
   z-index: 100;
   display: none; align-items: center;
-  border: 0.5px solid rgba(30, 24, 16, 0.8); border-radius: 38px;
-  background: rgb(243, 237, 224);
+  border: 0.5px solid rgba(30, 24, 16, 0.5); border-radius: 38px;
+  background: rgba(243, 237, 224, 0.8);
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -246,13 +246,13 @@ body.grid-mode canvas { cursor: pointer; }
   color: #1e1810;
   transition: opacity 0.18s ease;
 }
-#view-prev { padding: 17px 4px 17px 24px; }
-#view-next { padding: 17px 24px 17px 4px; }
+#view-prev { padding: 14px 2px 14px 22px; }
+#view-next { padding: 14px 22px 14px 2px; }
 .view-arrow:hover { opacity: 0.6; }
 #view-label {
   font-family: 'Cactus Classical Serif', Georgia, serif;
-  font-size: 15px; color: #1e1810;
+  font-size: 16px; color: #1e1810;
   min-width: 150px; text-align: center;
-  padding: 17px 0;
-  transition: opacity 0.18s ease;
+  padding: 14px 8px;
+  transition: opacity 0.1s ease;
 }
