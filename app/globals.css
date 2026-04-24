@@ -15,12 +15,12 @@ canvas { display: block; }
   position: fixed; top: 24px; left: 28px; z-index: 100;
   display: flex; align-items: center; justify-content: center;
   width: 42px; height: 42px; padding: 0;
-  border: 1.5px solid rgba(60, 45, 25, 0.4); border-radius: 50%;
+  border: 0.5px solid black; border-radius: 50%;
   cursor: pointer; background: transparent; color: #1e1810;
   text-decoration: none;
   transition: background 0.25s ease, border-color 0.25s ease;
 }
-#profile-btn:hover { background: rgba(60, 45, 25, 0.08); border-color: rgba(60, 45, 25, 0.6); }
+#profile-btn:hover { background: black; border-color: black; color: #f3ede0; }
 #profile-btn .btn-label { display: none; }
 
 #enter-btn {
@@ -35,9 +35,9 @@ canvas { display: block; }
   font-size: 18px; white-space: nowrap; text-decoration: none;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
-#enter-btn:hover { background: black; color: #f3ede0; border-color: #f3ede0; }
+#enter-btn:hover { background: black; color: #f3ede0; border-color: black; }
 #enter-btn .btn-label { font-family: 'Cactus Classical Serif', Georgia, serif; font-weight: 400; }
-#enter-btn .btn-arrow { font-family: -apple-system, 'SF Pro Text', sans-serif; font-size: 16px; }
+#enter-btn .btn-arrow { font-family: -apple-system, 'SF Pro Text', sans-serif; font-size: 16px; line-height: 1; position: relative; top: 1px; }
 
 body.grid-mode { cursor: default; }
 body.grid-mode canvas { cursor: pointer; }

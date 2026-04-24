@@ -18,7 +18,7 @@ export default function Home() {
       </a>
 
       <a id="enter-btn" href="#">
-        <span className="btn-label">Enter Platform</span>
+        <span className="btn-label">Enter</span>
         <span className="btn-arrow">→</span>
       </a>
 
