@@ -56,7 +56,7 @@ body.grid-mode canvas { cursor: pointer; }
 #story-inner {
   position: absolute; inset: 0;
   background: #f3ede0;
-  border-left: 1px solid rgba(60, 45, 25, 0.12);
+  border-left: 0.5px solid rgba(30, 24, 16, 0.7);
   padding: 52px 40px 48px;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: 20px;
@@ -246,13 +246,13 @@ body.grid-mode canvas { cursor: pointer; }
   color: #1e1810;
   transition: opacity 0.18s ease;
 }
-#view-prev { padding: 14px 2px 14px 22px; }
-#view-next { padding: 14px 22px 14px 2px; }
+#view-prev { padding: 13px 2px 13px 19px; }
+#view-next { padding: 13px 19px 13px 2px; }
 .view-arrow:hover { opacity: 0.6; }
 #view-label {
   font-family: 'Cactus Classical Serif', Georgia, serif;
-  font-size: 16px; color: #1e1810;
-  min-width: 150px; text-align: center;
-  padding: 14px 8px;
+  font-size: 15px; color: #1e1810;
+  min-width: 140px; text-align: center;
+  padding: 13px 6px;
   transition: opacity 0.1s ease;
 }

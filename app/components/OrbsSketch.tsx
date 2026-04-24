@@ -51,7 +51,9 @@ export default function OrbsSketch() {
         ];
 
         function setView(idx: number) {
+          const prevCategory = VIEWS[currentViewRef.current].category;
           currentViewRef.current = idx;
+          const nextCategory = VIEWS[idx].category;
           const label = document.getElementById('view-label');
           if (label) {
             label.style.opacity = '0';
@@ -60,6 +62,20 @@ export default function OrbsSketch() {
               label.style.opacity = '1';
             }, 60);
           }
+          // pulse balls becoming active
+          balls.forEach((b, i) => {
+            const wasActive = prevCategory === 'all' || stories[i]?.category === prevCategory;
+            const willActive = nextCategory === 'all' || stories[i]?.category === nextCategory;
+            if (!wasActive && willActive) {
+              const origR = b.baseR;
+              let t = 0;
+              const spring = setInterval(() => {
+                t++;
+                b.baseR = origR * (1 + 0.18 * Math.sin((t / 18) * Math.PI));
+                if (t >= 18) { b.baseR = origR; clearInterval(spring); }
+              }, 16);
+            }
+          });
         }
 
         const cursorEl = document.getElementById('cursor');
@@ -127,6 +143,7 @@ export default function OrbsSketch() {
           phase: number; wobble: number; pulseT: number;
           baseR: number; r: number;
           tx = 0; ty = 0;
+          displayAlpha = 2;
 
           constructor(i: number, total: number) {
             const ang = (i / total) * Math.PI * 2 + Math.random() * 0.9;
@@ -210,9 +227,9 @@ export default function OrbsSketch() {
           });
         }
 
-        function renderWatercolour(ball: Ball, dimmed = false) {
+        function renderWatercolour(ball: Ball) {
           const [rv, gv, bv] = ball.color;
-          const numLayers = 16, layerAlpha = dimmed ? 0.35 : 2;
+          const numLayers = 16, layerAlpha = ball.displayAlpha;
           (p as unknown as { fill: (...args: number[]) => void }).fill(rv, gv, bv, layerAlpha);
           p.noStroke();
           const n = 8;
@@ -572,8 +589,9 @@ export default function OrbsSketch() {
           (p.blendMode as (m: unknown) => void)(p.MULTIPLY);
           const activeCategory = VIEWS[currentViewRef.current].category;
           balls.forEach((b, i) => {
-            const dimmed = activeCategory !== 'all' && stories[i]?.category !== activeCategory;
-            renderWatercolour(b, dimmed);
+            const targetAlpha = (activeCategory === 'all' || stories[i]?.category === activeCategory) ? 2 : 0.25;
+            b.displayAlpha += (targetAlpha - b.displayAlpha) * 0.07;
+            renderWatercolour(b);
           });
         };
 
