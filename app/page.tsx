@@ -94,6 +94,20 @@ export default function Home() {
         </div>
       </div>
 
+      <div id="view-toggle">
+        <button id="view-prev" className="view-arrow">
+          <svg width="7" height="13" viewBox="0 0 7 13" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6,1 1,6.5 6,12" />
+          </svg>
+        </button>
+        <span id="view-label">Default View</span>
+        <button id="view-next" className="view-arrow">
+          <svg width="7" height="13" viewBox="0 0 7 13" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="1,1 6,6.5 1,12" />
+          </svg>
+        </button>
+      </div>
+
       <OrbsSketch />
       <DialRoot position="bottom-right" />
     </>

@@ -24,6 +24,8 @@ export default function OrbsSketch() {
   const dotCountRef = useRef(BASE_COUNT);
   dotCountRef.current = Number(params.dots) || BASE_COUNT;
 
+  const currentViewRef = useRef(0);
+
   useEffect(() => {
     let p5Instance: InstanceType<typeof import('p5')> | null = null;
 
@@ -39,6 +41,26 @@ export default function OrbsSketch() {
           [100, 148, 120],
           [195, 148, 175],
         ] as [number, number, number][];
+
+        const VIEWS = [
+          { label: 'Default View',  category: 'all' },
+          { label: 'Clinical Care', category: 'clinical' },
+          { label: 'Research',      category: 'research' },
+          { label: 'Productivity',  category: 'productivity' },
+          { label: 'Personal',      category: 'personal' },
+        ];
+
+        function setView(idx: number) {
+          currentViewRef.current = idx;
+          const label = document.getElementById('view-label');
+          if (label) {
+            label.style.opacity = '0';
+            setTimeout(() => {
+              label.textContent = VIEWS[idx].label;
+              label.style.opacity = '1';
+            }, 100);
+          }
+        }
 
         const cursorEl = document.getElementById('cursor');
         let W: number, H: number;
@@ -188,9 +210,9 @@ export default function OrbsSketch() {
           });
         }
 
-        function renderWatercolour(ball: Ball) {
+        function renderWatercolour(ball: Ball, dimmed = false) {
           const [rv, gv, bv] = ball.color;
-          const numLayers = 16, layerAlpha = 2;
+          const numLayers = 16, layerAlpha = dimmed ? 0.35 : 2;
           (p as unknown as { fill: (...args: number[]) => void }).fill(rv, gv, bv, layerAlpha);
           p.noStroke();
           const n = 8;
@@ -223,28 +245,33 @@ export default function OrbsSketch() {
           return positions;
         }
 
-        const REAL_STORIES = [
-          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false },
-          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false },
-          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false },
-          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false },
-          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false },
-          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false },
-          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false },
-          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false },
-          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false },
-          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false },
-          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false },
-          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false },
-          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false },
-          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false },
-          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false },
+        type Story = { title: string; body: string; isPlaceholder: boolean; category: string };
+
+        const REAL_STORIES: Story[] = [
+          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false, category: 'productivity' },
+          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false, category: 'clinical' },
+          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false, category: 'productivity' },
+          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false, category: 'clinical' },
+          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false, category: 'clinical' },
+          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false, category: 'research' },
+          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false, category: 'productivity' },
+          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false, category: 'personal' },
+          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false, category: 'clinical' },
+          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false, category: 'productivity' },
+          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false, category: 'research' },
+          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false, category: 'productivity' },
+          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false, category: 'productivity' },
+          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false, category: 'clinical' },
+          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false, category: 'personal' },
         ];
 
-        function buildStories(count: number) {
-          const arr = [...REAL_STORIES];
+        const PLACEHOLDER_CATS = ['clinical', 'research', 'productivity', 'personal'];
+
+        function buildStories(count: number): Story[] {
+          const arr: Story[] = [...REAL_STORIES];
           while (arr.length < count) {
-            arr.push({ title: `Story ${arr.length + 1}`, body: 'This story is coming soon.', isPlaceholder: true });
+            const cat = PLACEHOLDER_CATS[arr.length % PLACEHOLDER_CATS.length];
+            arr.push({ title: `Story ${arr.length + 1}`, body: 'This story is coming soon.', isPlaceholder: true, category: cat });
           }
           return arr.slice(0, count);
         }
@@ -355,7 +382,7 @@ export default function OrbsSketch() {
           nb.ty = H * 0.5 + Math.sin(angle) * Math.min(W, H) * 0.28;
           nb.vx = 0; nb.vy = -2.5;
           balls.push(nb);
-          stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false });
+          stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false, category: 'personal' });
           if (mode === 'grid') {
             mode = 'transitioning';
             setTimeout(() => { mode = 'grid'; }, 2200);
@@ -408,6 +435,13 @@ export default function OrbsSketch() {
             for (let s = 0; s < 3; s++) resolveAll();
           }
 
+          document.getElementById('view-prev')?.addEventListener('click', () => {
+            setView((currentViewRef.current - 1 + VIEWS.length) % VIEWS.length);
+          });
+          document.getElementById('view-next')?.addEventListener('click', () => {
+            setView((currentViewRef.current + 1) % VIEWS.length);
+          });
+
           document.getElementById('story-close')?.addEventListener('click', () => {
             document.getElementById('story-panel')?.classList.remove('open');
           });
@@ -449,7 +483,7 @@ export default function OrbsSketch() {
               || (document.getElementById('preview-title-display')?.textContent ?? '');
             const slotIndex = stories.findIndex(s => s.isPlaceholder);
             if (slotIndex !== -1) {
-              stories[slotIndex] = { title, body: body + '\n\n— ' + name, isPlaceholder: false };
+              stories[slotIndex] = { title, body: body + '\n\n— ' + name, isPlaceholder: false, category: stories[slotIndex].category };
               flashBlob(slotIndex);
             } else {
               spawnNewBall(title, body, name);
@@ -485,7 +519,12 @@ export default function OrbsSketch() {
             setTimeout(() => {
               const shareBtn = document.getElementById('share-btn')!;
               shareBtn.style.display = 'flex';
-              requestAnimationFrame(() => requestAnimationFrame(() => shareBtn.classList.add('visible')));
+              const viewToggle = document.getElementById('view-toggle')!;
+              viewToggle.style.display = 'flex';
+              requestAnimationFrame(() => requestAnimationFrame(() => {
+                shareBtn.classList.add('visible');
+                viewToggle.classList.add('visible');
+              }));
             }, 1600);
           });
         };
@@ -527,7 +566,11 @@ export default function OrbsSketch() {
           }
 
           (p.blendMode as (m: unknown) => void)(p.MULTIPLY);
-          balls.forEach(b => renderWatercolour(b));
+          const activeCategory = VIEWS[currentViewRef.current].category;
+          balls.forEach((b, i) => {
+            const dimmed = activeCategory !== 'all' && stories[i]?.category !== activeCategory;
+            renderWatercolour(b, dimmed);
+          });
         };
 
         document.addEventListener('mousemove', e => {

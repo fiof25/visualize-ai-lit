@@ -31,11 +31,11 @@ canvas { display: block; }
   display: flex; align-items: center; gap: 9px;
   padding: 15px 27px;
   border: 0.5px solid black; border-radius: 38px;
-  cursor: pointer; background: transparent; color: black;
+  cursor: pointer; background: black; color: #f3ede0;
   font-size: 18px; white-space: nowrap; text-decoration: none;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
-#enter-btn:hover { background: black; color: #f3ede0; border-color: black; }
+#enter-btn:hover { background: transparent; color: black; border-color: black; }
 #enter-btn .btn-label { font-family: 'Cactus Classical Serif', Georgia, serif; font-weight: 400; }
 #enter-btn .btn-arrow { font-family: -apple-system, 'SF Pro Text', sans-serif; font-size: 16px; line-height: 1; position: relative; top: 1px; }
 
@@ -223,3 +223,37 @@ body.grid-mode canvas { cursor: pointer; }
   color: rgba(60, 45, 25, 0.30); line-height: 1; transition: color 0.2s ease;
 }
 #form-close:hover { color: #1e1810; }
+
+#view-toggle {
+  position: fixed; top: 24px; left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  z-index: 100;
+  display: none; align-items: center;
+  border: 0.5px solid rgba(30, 24, 16, 0.15); border-radius: 38px;
+  background: rgba(243, 237, 224, 0.30);
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+#view-toggle.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.view-arrow {
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  color: #1e1810;
+  transition: opacity 0.18s ease;
+}
+#view-prev { padding: 17px 4px 17px 24px; }
+#view-next { padding: 17px 24px 17px 4px; }
+.view-arrow:hover { opacity: 0.6; }
+#view-label {
+  font-family: 'Cactus Classical Serif', Georgia, serif;
+  font-size: 15px; color: #1e1810;
+  min-width: 150px; text-align: center;
+  padding: 17px 0;
+  transition: opacity 0.18s ease;
+}
