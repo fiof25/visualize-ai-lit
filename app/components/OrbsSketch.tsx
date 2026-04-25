@@ -16,7 +16,7 @@ export default function OrbsSketch() {
   const params = useDialKit('Canvas', {
     dots: {
       type: 'select',
-      options: ['45', '100', '200'],
+      options: ['45', '50', '55', '60', '65', '70', '75', '80', '90', '100', '110', '125', '150', '175', '200'],
       default: '45',
     },
   });
@@ -119,6 +119,10 @@ export default function OrbsSketch() {
           return { verts: newV, mods: newM };
         }
 
+        function translatePoly(poly: Poly, ox: number, oy: number): Poly {
+          return { verts: poly.verts.map(v => ({ x: v.x + ox, y: v.y + oy })), mods: poly.mods.slice() };
+        }
+
         function drawPoly({ verts }: Poly) {
           const n = verts.length;
           p.beginShape();
@@ -144,6 +148,8 @@ export default function OrbsSketch() {
           baseR: number; r: number;
           tx = 0; ty = 0;
           displayAlpha = 2;
+          cachedPolyLocal: Poly | null = null;
+          polyAge = 999;
 
           constructor(i: number, total: number) {
             const ang = (i / total) * Math.PI * 2 + Math.random() * 0.9;
@@ -227,18 +233,25 @@ export default function OrbsSketch() {
           });
         }
 
-        function renderWatercolour(ball: Ball) {
+        function renderWatercolour(ball: Ball, count: number) {
           const [rv, gv, bv] = ball.color;
-          const numLayers = 16, layerAlpha = ball.displayAlpha;
-          (p as unknown as { fill: (...args: number[]) => void }).fill(rv, gv, bv, layerAlpha);
+          const numLayers = count <= 60 ? 16 : count <= 100 ? 10 : count <= 150 ? 7 : 5;
+          const refreshEvery = count <= 60 ? 2 : count <= 120 ? 3 : 6;
+          (p as unknown as { fill: (...args: number[]) => void }).fill(rv, gv, bv, ball.displayAlpha);
           p.noStroke();
-          const n = 8;
-          const verts = Array.from({ length: n }, (_, i) => {
-            const a = (i / n) * Math.PI * 2;
-            return { x: ball.x + Math.cos(a) * ball.r, y: ball.y + Math.sin(a) * ball.r };
-          });
-          const mods = Array.from({ length: n }, () => p.random(0.32, 0.90));
-          let poly = growPoly(growPoly({ verts, mods }));
+
+          ball.polyAge++;
+          if (!ball.cachedPolyLocal || ball.polyAge >= refreshEvery) {
+            ball.polyAge = 0;
+            const n = 8;
+            const verts = Array.from({ length: n }, (_, i) => {
+              const a = (i / n) * Math.PI * 2;
+              return { x: Math.cos(a) * ball.r, y: Math.sin(a) * ball.r };
+            });
+            const mods = Array.from({ length: n }, () => p.random(0.32, 0.90));
+            ball.cachedPolyLocal = growPoly(growPoly({ verts, mods }));
+          }
+          let poly = translatePoly(ball.cachedPolyLocal, ball.x, ball.y);
           for (let i = 0; i < numLayers; i++) {
             if (i === Math.floor(numLayers / 2)) poly = growPoly(poly);
             drawPoly(growPoly(poly));
@@ -426,6 +439,7 @@ export default function OrbsSketch() {
         }
 
         function reinitBalls(count: number) {
+          p.frameRate(count <= 60 ? 60 : count <= 100 ? 45 : 30);
           const r = computeBaseR(count);
           balls = Array.from({ length: count }, (_, i) => {
             const b = new Ball(i, count);
@@ -433,9 +447,10 @@ export default function OrbsSketch() {
             b.r = r;
             return b;
           });
+          const warmupPasses = count <= 60 ? 3 : count <= 120 ? 2 : 1;
           for (let i = 0; i < 500; i++) {
             balls.forEach(b => b.tick(i * 0.001, -9999, -9999));
-            for (let s = 0; s < 3; s++) resolveAll();
+            for (let s = 0; s < warmupPasses; s++) resolveAll();
           }
           stories = buildStories(count);
           if (mode !== 'freeform') {
@@ -448,12 +463,14 @@ export default function OrbsSketch() {
         p.setup = () => {
           W = window.innerWidth; H = window.innerHeight;
           p.createCanvas(W, H);
-          p.background(PR, PG, PB);
           const initCount = dotCountRef.current;
+          p.frameRate(initCount <= 60 ? 60 : initCount <= 100 ? 45 : 30);
+          p.background(PR, PG, PB);
           balls = Array.from({ length: initCount }, (_, i) => new Ball(i, initCount));
+          const warmupPasses = initCount <= 60 ? 3 : initCount <= 120 ? 2 : 1;
           for (let i = 0; i < 500; i++) {
             balls.forEach(b => b.tick(i * 0.001, -9999, -9999));
-            for (let s = 0; s < 3; s++) resolveAll();
+            for (let s = 0; s < warmupPasses; s++) resolveAll();
           }
 
           document.getElementById('view-prev')?.addEventListener('click', () => {
@@ -571,7 +588,8 @@ export default function OrbsSketch() {
           if (mode === 'freeform') {
             simT += 0.001;
             balls.forEach(b => b.tick(simT, mouse.x, mouse.y));
-            for (let s = 0; s < 3; s++) resolveAll();
+            const passes = dotCountRef.current <= 60 ? 3 : dotCountRef.current <= 120 ? 2 : 1;
+            for (let s = 0; s < passes; s++) resolveAll();
           } else {
             let settled = true;
             balls.forEach(b => {
@@ -591,7 +609,7 @@ export default function OrbsSketch() {
           balls.forEach((b, i) => {
             const targetAlpha = (activeCategory === 'all' || stories[i]?.category === activeCategory) ? 2 : 0.25;
             b.displayAlpha += (targetAlpha - b.displayAlpha) * 0.07;
-            renderWatercolour(b);
+            renderWatercolour(b, dotCountRef.current);
           });
         };
 

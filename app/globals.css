@@ -56,7 +56,7 @@ body.grid-mode canvas { cursor: pointer; }
 #story-inner {
   position: absolute; inset: 0;
   background: #f3ede0;
-  border-left: 0.5px solid rgba(30, 24, 16, 0.7);
+  border-left: 0.5px solid rgba(30, 24, 16, 0.4);
   padding: 52px 40px 48px;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: 20px;
