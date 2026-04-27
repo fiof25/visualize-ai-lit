@@ -51,6 +51,7 @@ export default function OrbsSketch() {
         ];
 
         function setView(idx: number) {
+          localViewIdx = idx;
           const prevCategory = VIEWS[currentViewRef.current].category;
           currentViewRef.current = idx;
           const nextCategory = VIEWS[idx].category;
@@ -61,6 +62,14 @@ export default function OrbsSketch() {
               label.textContent = VIEWS[idx].label;
               label.style.opacity = '1';
             }, 60);
+          }
+          // Rearrange — Default View always uses the uniform grid
+          if (mode !== 'freeform') {
+            const targets = nextCategory === 'all'
+              ? computeGridPositions(balls.length)
+              : computeCategoryPositions(nextCategory);
+            balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
+            mode = 'transitioning';
           }
           // pulse balls becoming active
           balls.forEach((b, i) => {
@@ -86,6 +95,7 @@ export default function OrbsSketch() {
         let mode: 'freeform' | 'transitioning' | 'grid' = 'freeform';
         let hoveredBlob = -1;
         let prevDotCount = dotCountRef.current;
+        let localViewIdx = 0;
 
         function wrand() {
           const x = p.random();
@@ -275,6 +285,130 @@ export default function OrbsSketch() {
           return positions;
         }
 
+        function computeCategoryPositions(activeCategory: string) {
+          const count = balls.length;
+          if (activeCategory === 'all') return computeGridPositions(count);
+
+          const activeIndices: number[] = [];
+          const inactiveIndices: number[] = [];
+          for (let i = 0; i < count; i++) {
+            (stories[i]?.category === activeCategory ? activeIndices : inactiveIndices).push(i);
+          }
+
+          const positions: { x: number; y: number }[] = new Array(count);
+          const cx = W * 0.5, cy = H * 0.5;
+          const na = activeIndices.length;
+          // Spacing scales with orb radius so shapes stay proportional at any dot count
+          const spc = computeBaseR(count) * 2.4;
+          const maxR = Math.min(W, H) * 0.43;
+
+          if (activeCategory === 'clinical') {
+            // Cross — fixed arm length capped to screen; grows wider (more lanes) not longer
+            const armLen = Math.min(cy * 0.72, cx * 0.72);
+            const orbsPerLane = Math.max(1, Math.floor(armLen / spc));
+            // Axes: [along-x, along-y, perp-x, perp-y]
+            const dirs: [number, number, number, number][] = [
+              [0, -1, 1, 0], [1, 0, 0, 1], [0, 1, 1, 0], [-1, 0, 0, 1],
+            ];
+            // Lane offsets: centre first, then ±1, ±2 … so cross thickens symmetrically
+            const laneOffsets = [0, spc * 0.94, -spc * 0.94, spc * 1.88, -spc * 1.88];
+            let j = 0;
+            if (na > 0) positions[activeIndices[j++]] = { x: cx, y: cy };
+            for (let li = 0; li < laneOffsets.length && j < na; li++) {
+              const off = laneOffsets[li];
+              dirs.forEach(([ax, ay, px, py]) => {
+                for (let k = 1; k <= orbsPerLane && j < na; k++, j++) {
+                  positions[activeIndices[j]] = {
+                    x: cx + ax * k * spc + px * off,
+                    y: cy + ay * k * spc + py * off,
+                  };
+                }
+              });
+            }
+
+          } else if (activeCategory === 'research') {
+            // Filled 5-pointed star — hex grid inside star boundary, sorted center-out
+            // Star grows just enough to always have ≥ na candidate positions
+            const outerR = Math.min(Math.max(spc * Math.sqrt(na) * 1.1 + spc, spc * 3), maxR);
+            const innerR = outerR * 0.382;
+            const seg = (Math.PI * 2) / 5;
+
+            const candidates: { x: number; y: number }[] = [];
+            const gridR = Math.ceil(outerR / spc) + 1;
+            for (let gy = -gridR; gy <= gridR; gy++) {
+              for (let gx = -gridR; gx <= gridR; gx++) {
+                const px = cx + gx * spc + (Math.abs(gy) % 2) * spc * 0.5;
+                const py = cy + gy * spc * 0.866;
+                const dx = px - cx, dy = py - cy;
+                const r = Math.hypot(dx, dy);
+                if (r > outerR) continue;
+                const theta = ((Math.atan2(dy, dx) + Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+                const t = (theta % seg) / (seg / 2);
+                const tNorm = t <= 1 ? t : 2 - t;
+                if (r <= outerR - (outerR - innerR) * tNorm) candidates.push({ x: px, y: py });
+              }
+            }
+            candidates.sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
+
+            activeIndices.forEach((idx, j) => {
+              const pos = candidates[j % Math.max(candidates.length, 1)];
+              if (pos) positions[idx] = { x: pos.x, y: pos.y };
+            });
+
+          } else if (activeCategory === 'productivity') {
+            // Staggered diagonal rows — step sizes derived from spacing
+            const cols = Math.max(2, Math.ceil(Math.sqrt(na * 2.0)));
+            const rows = Math.ceil(na / cols);
+            const colStep = Math.min(spc * 1.1, (W * 0.72) / Math.max(cols - 1, 1));
+            const rowStep = Math.min(spc, (H * 0.68) / Math.max(rows - 1, 1));
+            const gridW = (cols - 1) * colStep;
+            const gridH = (rows - 1) * rowStep;
+            activeIndices.forEach((idx, j) => {
+              const c = j % cols;
+              const r = Math.floor(j / cols);
+              positions[idx] = {
+                x: cx - gridW / 2 + c * colStep + r * colStep * 0.38,
+                y: cy - gridH / 2 + r * rowStep,
+              };
+            });
+
+          } else if (activeCategory === 'personal') {
+            // Ring — radius grows to keep orbs evenly spaced around the ellipse
+            const rx = Math.min(Math.max(spc * na / (2 * Math.PI), spc * 2), maxR);
+            const ry = rx * 0.84;
+            activeIndices.forEach((idx, j) => {
+              const angle = (j / Math.max(na, 1)) * Math.PI * 2 - Math.PI / 2;
+              positions[idx] = { x: cx + Math.cos(angle) * rx, y: cy + Math.sin(angle) * ry };
+            });
+
+          } else {
+            // Fallback: compact grid
+            const cols = Math.max(1, Math.round(Math.sqrt(na * (W / H))));
+            const rows = Math.ceil(na / cols);
+            const gridW = Math.min((cols - 1) * spc * 1.1, W * 0.72);
+            const gridH = Math.min((rows - 1) * spc, H * 0.68);
+            activeIndices.forEach((idx, j) => {
+              const c = j % cols, r = Math.floor(j / cols);
+              positions[idx] = {
+                x: cx - gridW / 2 + (cols > 1 ? c * gridW / (cols - 1) : 0),
+                y: cy - gridH / 2 + (rows > 1 ? r * gridH / (rows - 1) : 0),
+              };
+            });
+          }
+
+          // Inactive orbs: outer ring
+          const ni = inactiveIndices.length;
+          inactiveIndices.forEach((idx, j) => {
+            const angle = (j / Math.max(ni, 1)) * Math.PI * 2;
+            positions[idx] = {
+              x: cx + Math.cos(angle) * W * 0.46,
+              y: cy + Math.sin(angle) * H * 0.43,
+            };
+          });
+
+          return positions;
+        }
+
         type Story = { title: string; body: string; isPlaceholder: boolean; category: string };
 
         const REAL_STORIES: Story[] = [
@@ -454,8 +588,8 @@ export default function OrbsSketch() {
           }
           stories = buildStories(count);
           if (mode !== 'freeform') {
-            const targets = computeGridPositions(count);
-            balls.forEach((b, i) => { b.tx = targets[i].x; b.ty = targets[i].y; });
+            const targets = computeCategoryPositions(VIEWS[currentViewRef.current].category);
+            balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
             mode = 'transitioning';
           }
         }
@@ -474,10 +608,10 @@ export default function OrbsSketch() {
           }
 
           document.getElementById('view-prev')?.addEventListener('click', () => {
-            setView((currentViewRef.current - 1 + VIEWS.length) % VIEWS.length);
+            setView((localViewIdx - 1 + VIEWS.length) % VIEWS.length);
           });
           document.getElementById('view-next')?.addEventListener('click', () => {
-            setView((currentViewRef.current + 1) % VIEWS.length);
+            setView((localViewIdx + 1) % VIEWS.length);
           });
 
           document.getElementById('story-close')?.addEventListener('click', () => {
@@ -548,6 +682,11 @@ export default function OrbsSketch() {
           document.getElementById('enter-btn')?.addEventListener('click', e => {
             e.preventDefault(); e.stopPropagation();
             if (mode !== 'freeform') return;
+            // Always land on Default View (grid) when entering
+            localViewIdx = 0;
+            currentViewRef.current = 0;
+            const label = document.getElementById('view-label');
+            if (label) label.textContent = VIEWS[0].label;
             mode = 'transitioning';
             const targets = computeGridPositions(balls.length);
             balls.forEach((b, i) => { b.tx = targets[i].x; b.ty = targets[i].y; });
