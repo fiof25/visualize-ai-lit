@@ -296,13 +296,21 @@ export default function OrbsSketch() {
         }
 
         function circularCluster(cx: number, cy: number, n: number, baseR: number) {
-          // Phyllotaxis (golden-angle). c = baseR * 1.05 → nearest-neighbour ≈ 2.1 × baseR (touching, no overlap)
-          const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-          return Array.from({ length: n }, (_, i) => {
-            const r = baseR * 1.05 * Math.sqrt(i + 0.5);
-            const angle = i * goldenAngle;
-            return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
-          });
+          // Hexagonal close-pack: uniform spacing, natural faceted edge (not perfect circle, not random)
+          const spc  = baseR * 2.08;          // centre-to-centre distance (tiny gap above touching)
+          const rowH = spc * 0.866;           // sin(60°) — vertical row pitch
+
+          const gridR = Math.ceil(Math.sqrt(n) * 1.6);
+          const candidates: { x: number; y: number; d: number }[] = [];
+          for (let row = -gridR; row <= gridR; row++) {
+            for (let col = -gridR; col <= gridR; col++) {
+              const x = cx + col * spc + (((row % 2) + 2) % 2) * spc * 0.5;
+              const y = cy + row * rowH;
+              candidates.push({ x, y, d: Math.hypot(x - cx, y - cy) });
+            }
+          }
+          candidates.sort((a, b) => a.d - b.d);
+          return candidates.slice(0, n).map(({ x, y }) => ({ x, y }));
         }
 
         function computeWorkSectorPositions() {
@@ -348,10 +356,23 @@ export default function OrbsSketch() {
           for (let i = 0; i < balls.length; i++) {
             (stories[i]?.category === sector ? chosen : others).push(i);
           }
-          // Phyllotaxis centred — spacing accounts for 1.6× display scale so orbs don't overlap
-          const baseR = computeBaseR(balls.length) * 1.6;
-          const clusterPos = circularCluster(W * 0.5, H * 0.5, chosen.length, baseR);
-          chosen.forEach((idx, j) => { positions[idx] = clusterPos[j]; });
+          // Compact centred grid — step capped by orb size so dots stay close
+          const n = chosen.length;
+          const aspect = W / H;
+          const cols = Math.max(2, Math.round(Math.sqrt(n * aspect)));
+          const rows = Math.ceil(n / cols);
+          const baseR = computeBaseR(balls.length);
+          const step = baseR * 3.2; // 1.2× scale diameter (2.4×) + comfortable gap
+          const gridW = (cols - 1) * step;
+          const gridH = (rows - 1) * step;
+          const ox = W * 0.5 - gridW / 2;
+          const oy = H * 0.5 - gridH / 2;
+          chosen.forEach((idx, j) => {
+            positions[idx] = {
+              x: ox + (j % cols) * step,
+              y: oy + Math.floor(j / cols) * step,
+            };
+          });
           others.forEach((idx, j) => {
             const angle = (j / Math.max(others.length, 1)) * Math.PI * 2;
             positions[idx] = { x: W * 0.5 + Math.cos(angle) * 40, y: H + 180 };
@@ -794,7 +815,7 @@ export default function OrbsSketch() {
             b.color[2] += (b.targetColor[2] - b.color[2]) * 0.04;
             // Scale: 1.6× when zoomed into this sector, 1.1× on cluster hover, else 1
             const isHoveredCluster = inWorksector && zoomedSector === null && hoveredCluster !== null && stories[i]?.category === hoveredCluster;
-            const scaleTarget = zoomedSector !== null && stories[i]?.category === zoomedSector ? 1.6
+            const scaleTarget = zoomedSector !== null && stories[i]?.category === zoomedSector ? 1.2
               : isHoveredCluster ? 1.1 : 1;
             b.displayScale += (scaleTarget - b.displayScale) * 0.08;
             b.displayAlpha += (2 - b.displayAlpha) * 0.07;
@@ -874,8 +895,13 @@ export default function OrbsSketch() {
                 }
               }
             } else {
-              const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r);
-              if (hit !== -1) openStory(hit);
+              const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r * b.displayScale);
+              if (hit !== -1) {
+                openStory(hit);
+              } else if (zoomedSector !== null) {
+                // Click on empty space while zoomed → exit back to cluster view
+                exitZoom();
+              }
             }
           }
         });
