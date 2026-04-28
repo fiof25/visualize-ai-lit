@@ -43,16 +43,14 @@ export default function OrbsSketch() {
         ] as [number, number, number][];
 
         const VIEWS = [
-          { label: 'Default View',  category: 'all' },
-          { label: 'Clinical Care', category: 'clinical' },
-          { label: 'Research',      category: 'research' },
-          { label: 'Productivity',  category: 'productivity' },
-          { label: 'Personal',      category: 'personal' },
+          { label: 'Default View', category: 'all' },
+          { label: 'Work Sector',  category: 'worksector' },
         ];
 
         function setView(idx: number) {
+          // If zoomed in, left-arrow exits zoom instead of changing view
+          if (zoomedSector !== null) { exitZoom(); return; }
           localViewIdx = idx;
-          const prevCategory = VIEWS[currentViewRef.current].category;
           currentViewRef.current = idx;
           const nextCategory = VIEWS[idx].category;
           const label = document.getElementById('view-label');
@@ -63,28 +61,27 @@ export default function OrbsSketch() {
               label.style.opacity = '1';
             }, 60);
           }
-          // Rearrange — Default View always uses the uniform grid
+          // Update ball target colors based on new view
+          setBallTargetColors(nextCategory);
+          // Rearrange — Default View uses uniform grid
           if (mode !== 'freeform') {
             const targets = nextCategory === 'all'
               ? computeGridPositions(balls.length)
-              : computeCategoryPositions(nextCategory);
+              : computeWorkSectorPositions();
             balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
             mode = 'transitioning';
           }
-          // pulse balls becoming active
-          balls.forEach((b, i) => {
-            const wasActive = prevCategory === 'all' || stories[i]?.category === prevCategory;
-            const willActive = nextCategory === 'all' || stories[i]?.category === nextCategory;
-            if (!wasActive && willActive) {
-              const origR = b.baseR;
-              let t = 0;
-              const spring = setInterval(() => {
-                t++;
-                b.baseR = origR * (1 + 0.18 * Math.sin((t / 18) * Math.PI));
-                if (t >= 18) { b.baseR = origR; clearInterval(spring); }
-              }, 16);
-            }
-          });
+          // Show/hide cluster labels
+          if (nextCategory === 'worksector') {
+            setTimeout(() => {
+              if (VIEWS[currentViewRef.current].category === 'worksector' && zoomedSector === null) {
+                updateClusterLabels();
+                document.getElementById('cluster-labels')?.classList.add('visible');
+              }
+            }, 900);
+          } else {
+            document.getElementById('cluster-labels')?.classList.remove('visible');
+          }
         }
 
         const cursorEl = document.getElementById('cursor');
@@ -96,6 +93,14 @@ export default function OrbsSketch() {
         let hoveredBlob = -1;
         let prevDotCount = dotCountRef.current;
         let localViewIdx = 0;
+        let zoomedSector: string | null = null;
+        let hoveredCluster: string | null = null;
+        const SECTOR_COLORS: Record<string, [number, number, number]> = {
+          healthcare: [190, 118, 98],
+          government: [108, 135, 178],
+          education:  [198, 162, 95],
+        };
+        const sectorInfo: Record<string, { cx: number; cy: number; r: number }> = {};
 
         function wrand() {
           const x = p.random();
@@ -154,6 +159,9 @@ export default function OrbsSketch() {
         class Ball {
           x: number; y: number; vx: number; vy: number;
           color: [number, number, number];
+          origColor: [number, number, number];
+          targetColor: [number, number, number];
+          displayScale = 1;
           phase: number; wobble: number; pulseT: number;
           baseR: number; r: number;
           tx = 0; ty = 0;
@@ -168,7 +176,9 @@ export default function OrbsSketch() {
             this.y = H * 0.5 + Math.sin(ang) * H * spread * 0.75;
             this.vx = (Math.random() - 0.5) * 0.3;
             this.vy = (Math.random() - 0.5) * 0.3;
-            this.color = COLORS[i % COLORS.length];
+            this.color = [...COLORS[i % COLORS.length]] as [number, number, number];
+            this.origColor = [...this.color] as [number, number, number];
+            this.targetColor = [...this.color] as [number, number, number];
             this.phase = Math.random() * Math.PI * 2;
             this.wobble = 0.35 + Math.random() * 0.9;
             this.pulseT = Math.random() * Math.PI * 2;
@@ -285,156 +295,177 @@ export default function OrbsSketch() {
           return positions;
         }
 
-        function computeCategoryPositions(activeCategory: string) {
-          const count = balls.length;
-          if (activeCategory === 'all') return computeGridPositions(count);
+        function circularCluster(cx: number, cy: number, n: number, baseR: number) {
+          // Phyllotaxis (golden-angle). c = baseR * 1.05 → nearest-neighbour ≈ 2.1 × baseR (touching, no overlap)
+          const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+          return Array.from({ length: n }, (_, i) => {
+            const r = baseR * 1.05 * Math.sqrt(i + 0.5);
+            const angle = i * goldenAngle;
+            return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
+          });
+        }
 
-          const activeIndices: number[] = [];
-          const inactiveIndices: number[] = [];
+        function computeWorkSectorPositions() {
+          const count = balls.length;
+          const baseR = computeBaseR(count);
+          // Freeform: each cluster sits at a different height so the layout feels organic
+          const clusterSeeds = [
+            { cx: W * 0.22, cy: H * 0.42 },
+            { cx: W * 0.50, cy: H * 0.54 },
+            { cx: W * 0.78, cy: H * 0.44 },
+          ];
+
+          const groups: Record<string, number[]> = { healthcare: [], government: [], education: [] };
           for (let i = 0; i < count; i++) {
-            (stories[i]?.category === activeCategory ? activeIndices : inactiveIndices).push(i);
+            const cat = stories[i]?.category;
+            if (cat === 'healthcare') groups.healthcare.push(i);
+            else if (cat === 'government') groups.government.push(i);
+            else groups.education.push(i);
           }
 
           const positions: { x: number; y: number }[] = new Array(count);
-          const cx = W * 0.5, cy = H * 0.5;
-          const na = activeIndices.length;
-          // Spacing scales with orb radius so shapes stay proportional at any dot count
-          const spc = computeBaseR(count) * 2.4;
-          const maxR = Math.min(W, H) * 0.43;
+          const cats = ['healthcare', 'government', 'education'] as const;
 
-          if (activeCategory === 'clinical') {
-            // Cross — fixed arm length capped to screen; grows wider (more lanes) not longer
-            const armLen = Math.min(cy * 0.72, cx * 0.72);
-            const orbsPerLane = Math.max(1, Math.floor(armLen / spc));
-            // Axes: [along-x, along-y, perp-x, perp-y]
-            const dirs: [number, number, number, number][] = [
-              [0, -1, 1, 0], [1, 0, 0, 1], [0, 1, 1, 0], [-1, 0, 0, 1],
-            ];
-            // Lane offsets: centre first, then ±1, ±2 … so cross thickens symmetrically
-            const laneOffsets = [0, spc * 0.94, -spc * 0.94, spc * 1.88, -spc * 1.88];
-            let j = 0;
-            if (na > 0) positions[activeIndices[j++]] = { x: cx, y: cy };
-            for (let li = 0; li < laneOffsets.length && j < na; li++) {
-              const off = laneOffsets[li];
-              dirs.forEach(([ax, ay, px, py]) => {
-                for (let k = 1; k <= orbsPerLane && j < na; k++, j++) {
-                  positions[activeIndices[j]] = {
-                    x: cx + ax * k * spc + px * off,
-                    y: cy + ay * k * spc + py * off,
-                  };
-                }
-              });
-            }
-
-          } else if (activeCategory === 'research') {
-            // Filled 5-pointed star — hex grid inside star boundary, sorted center-out
-            // Star grows just enough to always have ≥ na candidate positions
-            const outerR = Math.min(Math.max(spc * Math.sqrt(na) * 1.1 + spc, spc * 3), maxR);
-            const innerR = outerR * 0.382;
-            const seg = (Math.PI * 2) / 5;
-
-            const candidates: { x: number; y: number }[] = [];
-            const gridR = Math.ceil(outerR / spc) + 1;
-            for (let gy = -gridR; gy <= gridR; gy++) {
-              for (let gx = -gridR; gx <= gridR; gx++) {
-                const px = cx + gx * spc + (Math.abs(gy) % 2) * spc * 0.5;
-                const py = cy + gy * spc * 0.866;
-                const dx = px - cx, dy = py - cy;
-                const r = Math.hypot(dx, dy);
-                if (r > outerR) continue;
-                const theta = ((Math.atan2(dy, dx) + Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-                const t = (theta % seg) / (seg / 2);
-                const tNorm = t <= 1 ? t : 2 - t;
-                if (r <= outerR - (outerR - innerR) * tNorm) candidates.push({ x: px, y: py });
-              }
-            }
-            candidates.sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy));
-
-            activeIndices.forEach((idx, j) => {
-              const pos = candidates[j % Math.max(candidates.length, 1)];
-              if (pos) positions[idx] = { x: pos.x, y: pos.y };
+          cats.forEach((cat, ci) => {
+            const { cx: ccx, cy: ccy } = clusterSeeds[ci];
+            const indices = groups[cat];
+            const clusterPos = circularCluster(ccx, ccy, indices.length, baseR);
+            let maxR = 0;
+            clusterPos.forEach(p => {
+              const d = Math.hypot(p.x - ccx, p.y - ccy);
+              if (d > maxR) maxR = d;
             });
-
-          } else if (activeCategory === 'productivity') {
-            // Staggered diagonal rows — step sizes derived from spacing
-            const cols = Math.max(2, Math.ceil(Math.sqrt(na * 2.0)));
-            const rows = Math.ceil(na / cols);
-            const colStep = Math.min(spc * 1.1, (W * 0.72) / Math.max(cols - 1, 1));
-            const rowStep = Math.min(spc, (H * 0.68) / Math.max(rows - 1, 1));
-            const gridW = (cols - 1) * colStep;
-            const gridH = (rows - 1) * rowStep;
-            activeIndices.forEach((idx, j) => {
-              const c = j % cols;
-              const r = Math.floor(j / cols);
-              positions[idx] = {
-                x: cx - gridW / 2 + c * colStep + r * colStep * 0.38,
-                y: cy - gridH / 2 + r * rowStep,
-              };
-            });
-
-          } else if (activeCategory === 'personal') {
-            // Ring — radius grows to keep orbs evenly spaced around the ellipse
-            const rx = Math.min(Math.max(spc * na / (2 * Math.PI), spc * 2), maxR);
-            const ry = rx * 0.84;
-            activeIndices.forEach((idx, j) => {
-              const angle = (j / Math.max(na, 1)) * Math.PI * 2 - Math.PI / 2;
-              positions[idx] = { x: cx + Math.cos(angle) * rx, y: cy + Math.sin(angle) * ry };
-            });
-
-          } else {
-            // Fallback: compact grid
-            const cols = Math.max(1, Math.round(Math.sqrt(na * (W / H))));
-            const rows = Math.ceil(na / cols);
-            const gridW = Math.min((cols - 1) * spc * 1.1, W * 0.72);
-            const gridH = Math.min((rows - 1) * spc, H * 0.68);
-            activeIndices.forEach((idx, j) => {
-              const c = j % cols, r = Math.floor(j / cols);
-              positions[idx] = {
-                x: cx - gridW / 2 + (cols > 1 ? c * gridW / (cols - 1) : 0),
-                y: cy - gridH / 2 + (rows > 1 ? r * gridH / (rows - 1) : 0),
-              };
-            });
-          }
-
-          // Inactive orbs: outer ring
-          const ni = inactiveIndices.length;
-          inactiveIndices.forEach((idx, j) => {
-            const angle = (j / Math.max(ni, 1)) * Math.PI * 2;
-            positions[idx] = {
-              x: cx + Math.cos(angle) * W * 0.46,
-              y: cy + Math.sin(angle) * H * 0.43,
-            };
+            sectorInfo[cat] = { cx: ccx, cy: ccy, r: maxR + baseR * 1.5 };
+            indices.forEach((idx, j) => { positions[idx] = clusterPos[j]; });
           });
 
           return positions;
         }
 
+        function computeZoomedPositions(sector: string) {
+          const positions: { x: number; y: number }[] = new Array(balls.length);
+          const chosen: number[] = [], others: number[] = [];
+          for (let i = 0; i < balls.length; i++) {
+            (stories[i]?.category === sector ? chosen : others).push(i);
+          }
+          // Phyllotaxis centred — spacing accounts for 1.6× display scale so orbs don't overlap
+          const baseR = computeBaseR(balls.length) * 1.6;
+          const clusterPos = circularCluster(W * 0.5, H * 0.5, chosen.length, baseR);
+          chosen.forEach((idx, j) => { positions[idx] = clusterPos[j]; });
+          others.forEach((idx, j) => {
+            const angle = (j / Math.max(others.length, 1)) * Math.PI * 2;
+            positions[idx] = { x: W * 0.5 + Math.cos(angle) * 40, y: H + 180 };
+          });
+          return positions;
+        }
+
+        function updateClusterLabels() {
+          const cats = ['healthcare', 'government', 'education'] as const;
+          cats.forEach(cat => {
+            const el = document.getElementById(`label-${cat}`);
+            if (!el || !sectorInfo[cat]) return;
+            const { cx, cy } = sectorInfo[cat];
+            el.style.left = cx + 'px';
+            el.style.top = cy + 'px';
+          });
+        }
+
+        function triggerRipple(cx: number, cy: number, color: [number, number, number]) {
+          const ripple = document.getElementById('zoom-ripple');
+          if (!ripple) return;
+          ripple.style.left = cx + 'px';
+          ripple.style.top = cy + 'px';
+          ripple.style.background = `rgb(${color[0]},${color[1]},${color[2]})`;
+          ripple.classList.remove('active', 'fade');
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            ripple.classList.add('active');
+            setTimeout(() => {
+              ripple.classList.add('fade');
+              setTimeout(() => ripple.classList.remove('active', 'fade'), 400);
+            }, 500);
+          }));
+        }
+
+        function setBallTargetColors(category: string | null) {
+          balls.forEach((b, i) => {
+            const sectorCat = stories[i]?.category;
+            b.targetColor = category === 'worksector' || category === 'zoomed'
+              ? ([...(SECTOR_COLORS[sectorCat] ?? b.origColor)] as [number, number, number])
+              : ([...b.origColor] as [number, number, number]);
+          });
+        }
+
+        function enterZoom(sector: string) {
+          zoomedSector = sector;
+          const info = sectorInfo[sector];
+          if (info) triggerRipple(info.cx, info.cy, SECTOR_COLORS[sector]);
+          const targets = computeZoomedPositions(sector);
+          balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
+          mode = 'transitioning';
+          // Update view label to show sector name
+          const label = document.getElementById('view-label');
+          if (label) {
+            label.style.opacity = '0';
+            setTimeout(() => {
+              label.textContent = sector.charAt(0).toUpperCase() + sector.slice(1);
+              label.style.opacity = '1';
+            }, 60);
+          }
+          // Hide cluster labels, show back indicator
+          document.getElementById('cluster-labels')?.classList.remove('visible');
+          document.getElementById('view-prev')?.classList.add('back-active');
+        }
+
+        function exitZoom() {
+          zoomedSector = null;
+          const targets = computeWorkSectorPositions();
+          balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
+          mode = 'transitioning';
+          // Restore view label
+          const label = document.getElementById('view-label');
+          if (label) {
+            label.style.opacity = '0';
+            setTimeout(() => {
+              label.textContent = 'Work Sector';
+              label.style.opacity = '1';
+            }, 60);
+          }
+          document.getElementById('view-prev')?.classList.remove('back-active');
+          // Show cluster labels after transition
+          setTimeout(() => {
+            if (zoomedSector === null && VIEWS[currentViewRef.current].category === 'worksector') {
+              updateClusterLabels();
+              document.getElementById('cluster-labels')?.classList.add('visible');
+            }
+          }, 900);
+        }
+
         type Story = { title: string; body: string; isPlaceholder: boolean; category: string };
 
         const REAL_STORIES: Story[] = [
-          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false, category: 'productivity' },
-          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false, category: 'clinical' },
-          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false, category: 'productivity' },
-          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false, category: 'clinical' },
-          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false, category: 'clinical' },
-          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false, category: 'research' },
-          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false, category: 'productivity' },
-          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false, category: 'personal' },
-          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false, category: 'clinical' },
-          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false, category: 'productivity' },
-          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false, category: 'research' },
-          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false, category: 'productivity' },
-          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false, category: 'productivity' },
-          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false, category: 'clinical' },
-          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false, category: 'personal' },
+          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false, category: 'government' },
+          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false, category: 'healthcare' },
+          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false, category: 'education' },
+          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false, category: 'healthcare' },
+          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false, category: 'healthcare' },
+          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false, category: 'education' },
+          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false, category: 'government' },
+          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false, category: 'healthcare' },
+          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false, category: 'healthcare' },
+          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false, category: 'education' },
+          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false, category: 'education' },
+          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false, category: 'government' },
+          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false, category: 'government' },
+          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false, category: 'healthcare' },
+          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false, category: 'healthcare' },
         ];
 
-        const PLACEHOLDER_CATS = ['clinical', 'research', 'productivity', 'personal'];
+        const WORK_SECTOR_CATS = ['healthcare', 'government', 'education'];
 
         function buildStories(count: number): Story[] {
           const arr: Story[] = [...REAL_STORIES];
           while (arr.length < count) {
-            const cat = PLACEHOLDER_CATS[arr.length % PLACEHOLDER_CATS.length];
+            const cat = WORK_SECTOR_CATS[arr.length % WORK_SECTOR_CATS.length];
             arr.push({ title: `Story ${arr.length + 1}`, body: 'This story is coming soon.', isPlaceholder: true, category: cat });
           }
           return arr.slice(0, count);
@@ -546,7 +577,7 @@ export default function OrbsSketch() {
           nb.ty = H * 0.5 + Math.sin(angle) * Math.min(W, H) * 0.28;
           nb.vx = 0; nb.vy = -2.5;
           balls.push(nb);
-          stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false, category: 'personal' });
+          stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false, category: 'healthcare' });
           if (mode === 'grid') {
             mode = 'transitioning';
             setTimeout(() => { mode = 'grid'; }, 2200);
@@ -587,8 +618,11 @@ export default function OrbsSketch() {
             for (let s = 0; s < warmupPasses; s++) resolveAll();
           }
           stories = buildStories(count);
+          setBallTargetColors(VIEWS[currentViewRef.current].category);
           if (mode !== 'freeform') {
-            const targets = computeCategoryPositions(VIEWS[currentViewRef.current].category);
+            const targets = VIEWS[currentViewRef.current].category === 'all'
+              ? computeGridPositions(balls.length)
+              : computeWorkSectorPositions();
             balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
             mode = 'transitioning';
           }
@@ -612,6 +646,14 @@ export default function OrbsSketch() {
           });
           document.getElementById('view-next')?.addEventListener('click', () => {
             setView((localViewIdx + 1) % VIEWS.length);
+          });
+
+          (['healthcare', 'government', 'education'] as const).forEach(cat => {
+            document.getElementById(`label-${cat}`)?.addEventListener('click', () => {
+              if (VIEWS[currentViewRef.current].category === 'worksector' && zoomedSector === null) {
+                enterZoom(cat);
+              }
+            });
           });
 
           document.getElementById('story-close')?.addEventListener('click', () => {
@@ -744,11 +786,22 @@ export default function OrbsSketch() {
           }
 
           (p.blendMode as (m: unknown) => void)(p.MULTIPLY);
-          const activeCategory = VIEWS[currentViewRef.current].category;
+          const inWorksector = VIEWS[currentViewRef.current].category === 'worksector';
           balls.forEach((b, i) => {
-            const targetAlpha = (activeCategory === 'all' || stories[i]?.category === activeCategory) ? 2 : 0.25;
-            b.displayAlpha += (targetAlpha - b.displayAlpha) * 0.07;
+            // Lerp color toward target
+            b.color[0] += (b.targetColor[0] - b.color[0]) * 0.04;
+            b.color[1] += (b.targetColor[1] - b.color[1]) * 0.04;
+            b.color[2] += (b.targetColor[2] - b.color[2]) * 0.04;
+            // Scale: 1.6× when zoomed into this sector, 1.1× on cluster hover, else 1
+            const isHoveredCluster = inWorksector && zoomedSector === null && hoveredCluster !== null && stories[i]?.category === hoveredCluster;
+            const scaleTarget = zoomedSector !== null && stories[i]?.category === zoomedSector ? 1.6
+              : isHoveredCluster ? 1.1 : 1;
+            b.displayScale += (scaleTarget - b.displayScale) * 0.08;
+            b.displayAlpha += (2 - b.displayAlpha) * 0.07;
+            const savedR = b.r;
+            b.r *= b.displayScale;
             renderWatercolour(b, dotCountRef.current);
+            b.r = savedR;
           });
         };
 
@@ -756,7 +809,25 @@ export default function OrbsSketch() {
           mouse.x = e.clientX; mouse.y = e.clientY;
           if (cursorEl) { cursorEl.style.left = e.clientX + 'px'; cursorEl.style.top = e.clientY + 'px'; }
 
-          if (mode === 'grid') {
+          const inWorksectorGrid = mode === 'grid' && VIEWS[currentViewRef.current].category === 'worksector' && zoomedSector === null;
+
+          if (inWorksectorGrid) {
+            // Detect cluster hover
+            let found: string | null = null;
+            for (const cat of ['healthcare', 'government', 'education']) {
+              const info = sectorInfo[cat];
+              if (info && Math.hypot(e.clientX - info.cx, e.clientY - info.cy) < info.r) {
+                found = cat; break;
+              }
+            }
+            hoveredCluster = found;
+            // Suppress individual orb tooltip in cluster hover mode
+            if (hoveredBlob !== -1) {
+              hoveredBlob = -1;
+              document.getElementById('blob-tooltip')?.classList.remove('visible');
+            }
+          } else if (mode === 'grid') {
+            hoveredCluster = null;
             const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r);
             if (hit !== hoveredBlob) {
               hoveredBlob = hit;
@@ -775,6 +846,7 @@ export default function OrbsSketch() {
               blobTooltip.style.top = Math.max(e.clientY - 80, 8) + 'px';
             }
           } else {
+            hoveredCluster = null;
             if (hoveredBlob !== -1) {
               hoveredBlob = -1;
               document.getElementById('blob-tooltip')?.classList.remove('visible');
@@ -791,8 +863,20 @@ export default function OrbsSketch() {
           if (mode === 'freeform') {
             scatter(e.clientX, e.clientY);
           } else if (mode === 'grid') {
-            const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r);
-            if (hit !== -1) openStory(hit);
+            const inWorksectorGrid = VIEWS[currentViewRef.current].category === 'worksector' && zoomedSector === null;
+            if (inWorksectorGrid) {
+              // Click on a cluster → zoom in
+              for (const cat of ['healthcare', 'government', 'education']) {
+                const info = sectorInfo[cat];
+                if (info && Math.hypot(e.clientX - info.cx, e.clientY - info.cy) < info.r) {
+                  enterZoom(cat);
+                  return;
+                }
+              }
+            } else {
+              const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r);
+              if (hit !== -1) openStory(hit);
+            }
           }
         });
 

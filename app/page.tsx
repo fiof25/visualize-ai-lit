@@ -108,6 +108,14 @@ export default function Home() {
         </button>
       </div>
 
+      <div id="zoom-ripple" />
+
+      <div id="cluster-labels">
+        <div className="cluster-label" id="label-healthcare">Healthcare</div>
+        <div className="cluster-label" id="label-government">Government</div>
+        <div className="cluster-label" id="label-education">Education</div>
+      </div>
+
       <OrbsSketch />
       <DialRoot position="bottom-right" />
     </>
