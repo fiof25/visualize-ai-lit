@@ -472,15 +472,6 @@ export default function OrbsSketch() {
           const targets = computeZoomedPositions(sector);
           balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
           mode = 'transitioning';
-          // Update view label to show sector name
-          const label = document.getElementById('view-label');
-          if (label) {
-            label.style.opacity = '0';
-            setTimeout(() => {
-              label.textContent = sector.charAt(0).toUpperCase() + sector.slice(1);
-              label.style.opacity = '1';
-            }, 60);
-          }
           // Hide cluster labels, show back indicator
           document.getElementById('cluster-labels')?.classList.remove('visible');
           document.getElementById('view-prev')?.classList.add('back-active');
