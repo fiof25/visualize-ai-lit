@@ -19,10 +19,20 @@ export default function OrbsSketch() {
       options: ['45', '50', '55', '60', '65', '70', '75', '80', '90', '100', '110', '125', '150', '175', '200'],
       default: '45',
     },
+    spacing: {
+      type: 'slider',
+      min: 2.0,
+      max: 2.4,
+      step: 0.01,
+      default: 2.05,
+    },
   });
 
   const dotCountRef = useRef(BASE_COUNT);
   dotCountRef.current = Number(params.dots) || BASE_COUNT;
+
+  const spacingRef = useRef(2.05);
+  spacingRef.current = Number(params.spacing) || 2.05;
 
   const currentViewRef = useRef(0);
 
@@ -46,6 +56,8 @@ export default function OrbsSketch() {
           { label: 'Default View', category: 'all' },
           { label: 'Work Sector',  category: 'worksector' },
           { label: 'Testing',      category: 'testing' },
+          { label: 'Testing 2',    category: 'testing2' },
+          { label: 'Testing 3',    category: 'testing3' },
         ];
 
         function setView(idx: number) {
@@ -70,15 +82,19 @@ export default function OrbsSketch() {
               ? computeGridPositions(balls.length)
               : nextCategory === 'testing'
               ? computeTestingPositions()
+              : nextCategory === 'testing2'
+              ? computeTesting2Positions()
+              : nextCategory === 'testing3'
+              ? computeTesting2Positions()
               : computeWorkSectorPositions();
             balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
             mode = 'transitioning';
           }
           // Show/hide cluster labels
-          if (nextCategory === 'worksector' || nextCategory === 'testing') {
+          if (nextCategory === 'worksector' || nextCategory === 'testing' || nextCategory === 'testing2' || nextCategory === 'testing3') {
             setTimeout(() => {
               const cur = VIEWS[currentViewRef.current].category;
-              if ((cur === 'worksector' || cur === 'testing') && zoomedSector === null) {
+              if ((cur === 'worksector' || cur === 'testing' || cur === 'testing2' || cur === 'testing3') && zoomedSector === null) {
                 updateClusterLabels();
                 document.getElementById('cluster-labels')?.classList.add('visible');
               }
@@ -96,6 +112,7 @@ export default function OrbsSketch() {
         let mode: 'freeform' | 'transitioning' | 'grid' = 'freeform';
         let hoveredBlob = -1;
         let prevDotCount = dotCountRef.current;
+        let prevSpacing = spacingRef.current;
         let localViewIdx = 0;
         let zoomedSector: string | null = null;
         let hoveredCluster: string | null = null;
@@ -105,7 +122,8 @@ export default function OrbsSketch() {
           education:  [198, 162, 95],
         };
         const sectorInfo: Record<string, { cx: number; cy: number; r: number }> = {};
-        let testingAngle = 0;
+
+        let bobT = 0;
         interface RingParam { cx: number; cy: number; r: number; baseAngle: number }
         let ballRingParams: (RingParam | null)[] = [];
 
@@ -302,9 +320,9 @@ export default function OrbsSketch() {
           return positions;
         }
 
-        function circularCluster(cx: number, cy: number, n: number, baseR: number) {
+        function circularCluster(cx: number, cy: number, n: number, baseR: number, spcMult = spacingRef.current) {
           // Hexagonal close-pack: uniform spacing, natural faceted edge (not perfect circle, not random)
-          const spc  = baseR * 2.22;          // centre-to-centre distance (small gap between orbs)
+          const spc  = baseR * spcMult;
           const rowH = spc * 0.866;           // sin(60°) — vertical row pitch
 
           const gridR = Math.ceil(Math.sqrt(n) * 1.6);
@@ -320,14 +338,63 @@ export default function OrbsSketch() {
           return candidates.slice(0, n).map(({ x, y }) => ({ x, y }));
         }
 
+        function circularClusterWithHole(cx: number, cy: number, n: number, baseR: number, spcMult = spacingRef.current) {
+          // Same as circularCluster but leaves the centre cell empty for label readability
+          const spc  = baseR * spcMult;
+          const rowH = spc * 0.866;
+          const gridR = Math.ceil(Math.sqrt(n + 1) * 1.6);
+          const candidates: { x: number; y: number; d: number }[] = [];
+          for (let row = -gridR; row <= gridR; row++) {
+            for (let col = -gridR; col <= gridR; col++) {
+              const x = cx + col * spc + (((row % 2) + 2) % 2) * spc * 0.5;
+              const y = cy + row * rowH;
+              candidates.push({ x, y, d: Math.hypot(x - cx, y - cy) });
+            }
+          }
+          candidates.sort((a, b) => a.d - b.d);
+          return candidates.slice(1, n + 1).map(({ x, y }) => ({ x, y }));
+        }
+
+        function computeTesting2Positions() {
+          const count = balls.length;
+          const baseR = computeBaseR(count);
+          const clusterSeeds = [
+            { cx: W * 0.17, cy: H * 0.42 },
+            { cx: W * 0.50, cy: H * 0.54 },
+            { cx: W * 0.83, cy: H * 0.44 },
+          ];
+          const groups: Record<string, number[]> = { healthcare: [], government: [], education: [] };
+          for (let i = 0; i < count; i++) {
+            const cat = stories[i]?.category;
+            if (cat === 'healthcare') groups.healthcare.push(i);
+            else if (cat === 'government') groups.government.push(i);
+            else groups.education.push(i);
+          }
+          const positions: { x: number; y: number }[] = new Array(count);
+          const cats = ['healthcare', 'government', 'education'] as const;
+          cats.forEach((cat, ci) => {
+            const { cx: ccx, cy: ccy } = clusterSeeds[ci];
+            const indices = groups[cat];
+            const clusterPos = circularClusterWithHole(ccx, ccy, indices.length, baseR, 1.88);
+            let maxR = 0;
+            clusterPos.forEach(p => {
+              const d = Math.hypot(p.x - ccx, p.y - ccy);
+              if (d > maxR) maxR = d;
+            });
+            sectorInfo[cat] = { cx: ccx, cy: ccy, r: maxR + baseR * 1.5 };
+            indices.forEach((idx, j) => { positions[idx] = clusterPos[j]; });
+          });
+          return positions;
+        }
+
         function computeWorkSectorPositions() {
           const count = balls.length;
           const baseR = computeBaseR(count);
           // Freeform: each cluster sits at a different height so the layout feels organic
           const clusterSeeds = [
-            { cx: W * 0.22, cy: H * 0.42 },
+            { cx: W * 0.17, cy: H * 0.42 },
             { cx: W * 0.50, cy: H * 0.54 },
-            { cx: W * 0.78, cy: H * 0.44 },
+            { cx: W * 0.83, cy: H * 0.44 },
           ];
 
           const groups: Record<string, number[]> = { healthcare: [], government: [], education: [] };
@@ -344,7 +411,7 @@ export default function OrbsSketch() {
           cats.forEach((cat, ci) => {
             const { cx: ccx, cy: ccy } = clusterSeeds[ci];
             const indices = groups[cat];
-            const clusterPos = circularCluster(ccx, ccy, indices.length, baseR);
+            const clusterPos = circularCluster(ccx, ccy, indices.length, baseR, 1.88);
             let maxR = 0;
             clusterPos.forEach(p => {
               const d = Math.hypot(p.x - ccx, p.y - ccy);
@@ -361,9 +428,9 @@ export default function OrbsSketch() {
           const count = balls.length;
           const baseR = computeBaseR(count);
           const clusterSeeds = [
-            { cx: W * 0.22, cy: H * 0.42 },
+            { cx: W * 0.17, cy: H * 0.42 },
             { cx: W * 0.50, cy: H * 0.54 },
-            { cx: W * 0.78, cy: H * 0.44 },
+            { cx: W * 0.83, cy: H * 0.44 },
           ];
           const groups: Record<string, number[]> = { healthcare: [], government: [], education: [] };
           for (let i = 0; i < count; i++) {
@@ -375,7 +442,6 @@ export default function OrbsSketch() {
 
           const positions: { x: number; y: number }[] = new Array(count);
           ballRingParams = new Array(count).fill(null);
-          testingAngle = 0;
 
           const cats = ['healthcare', 'government', 'education'] as const;
           cats.forEach((cat, ci) => {
@@ -459,7 +525,7 @@ export default function OrbsSketch() {
         function setBallTargetColors(category: string | null) {
           balls.forEach((b, i) => {
             const sectorCat = stories[i]?.category;
-            b.targetColor = category === 'worksector' || category === 'zoomed' || category === 'testing'
+            b.targetColor = category === 'testing3'
               ? ([...(SECTOR_COLORS[sectorCat] ?? b.origColor)] as [number, number, number])
               : ([...b.origColor] as [number, number, number]);
           });
@@ -480,7 +546,9 @@ export default function OrbsSketch() {
         function exitZoom() {
           const returnCat = VIEWS[currentViewRef.current].category;
           zoomedSector = null;
-          const targets = returnCat === 'testing' ? computeTestingPositions() : computeWorkSectorPositions();
+          const targets = returnCat === 'testing' ? computeTestingPositions()
+            : returnCat === 'testing2' || returnCat === 'testing3' ? computeTesting2Positions()
+            : computeWorkSectorPositions();
           balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
           mode = 'transitioning';
           // Restore view label
@@ -488,14 +556,14 @@ export default function OrbsSketch() {
           if (label) {
             label.style.opacity = '0';
             setTimeout(() => {
-              label.textContent = returnCat === 'testing' ? 'Testing' : 'Work Sector';
+              label.textContent = returnCat === 'testing' ? 'Testing' : returnCat === 'testing2' ? 'Testing 2' : returnCat === 'testing3' ? 'Testing 3' : 'Work Sector';
               label.style.opacity = '1';
             }, 60);
           }
           document.getElementById('view-prev')?.classList.remove('back-active');
           // Show cluster labels after transition
           setTimeout(() => {
-            if (zoomedSector === null && (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing')) {
+            if (zoomedSector === null && (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing' || VIEWS[currentViewRef.current].category === 'testing2' || VIEWS[currentViewRef.current].category === 'testing3')) {
               updateClusterLabels();
               document.getElementById('cluster-labels')?.classList.add('visible');
             }
@@ -687,6 +755,8 @@ export default function OrbsSketch() {
               ? computeGridPositions(balls.length)
               : cat === 'testing'
               ? computeTestingPositions()
+              : cat === 'testing2' || cat === 'testing3'
+              ? computeTesting2Positions()
               : computeWorkSectorPositions();
             balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
             mode = 'transitioning';
@@ -716,7 +786,7 @@ export default function OrbsSketch() {
           (['healthcare', 'government', 'education'] as const).forEach(cat => {
             document.getElementById(`label-${cat}`)?.addEventListener('click', () => {
               const cc = VIEWS[currentViewRef.current].category;
-              if ((cc === 'worksector' || cc === 'testing') && zoomedSector === null) {
+              if ((cc === 'worksector' || cc === 'testing' || cc === 'testing2' || cc === 'testing3') && zoomedSector === null) {
                 enterZoom(cat);
               }
             });
@@ -827,6 +897,17 @@ export default function OrbsSketch() {
             reinitBalls(dotCountRef.current);
           }
 
+          // Sync spacing slider — recompute cluster positions live
+          if (prevSpacing !== spacingRef.current && mode === 'grid' && zoomedSector === null) {
+            prevSpacing = spacingRef.current;
+            const cat = VIEWS[currentViewRef.current].category;
+            if (cat === 'worksector' || cat === 'testing' || cat === 'testing2' || cat === 'testing3') {
+              const targets = cat === 'testing' ? computeTestingPositions() : (cat === 'testing2' || cat === 'testing3') ? computeTesting2Positions() : computeWorkSectorPositions();
+              balls.forEach((b, i) => { if (targets[i]) { b.tx = targets[i].x; b.ty = targets[i].y; } });
+              mode = 'transitioning';
+            }
+          }
+
           (p.blendMode as (m: unknown) => void)(p.BLEND);
           p.noStroke();
           (p as unknown as { fill: (...args: number[]) => void }).fill(PR, PG, PB, 6);
@@ -837,14 +918,14 @@ export default function OrbsSketch() {
             balls.forEach(b => b.tick(simT, mouse.x, mouse.y));
             const passes = dotCountRef.current <= 60 ? 3 : dotCountRef.current <= 120 ? 2 : 1;
             for (let s = 0; s < passes; s++) resolveAll();
-          } else if (mode === 'grid' && VIEWS[currentViewRef.current].category === 'testing' && zoomedSector === null) {
-            testingAngle += 0.004;
-            balls.forEach((b, i) => {
-              const ring = ballRingParams[i];
-              if (!ring) return;
-              const a = ring.baseAngle + testingAngle;
-              b.x += (ring.cx + Math.cos(a) * ring.r - b.x) * 0.06;
-              b.y += (ring.cy + Math.sin(a) * ring.r - b.y) * 0.06;
+          } else if (mode === 'grid' && (VIEWS[currentViewRef.current].category === 'testing2' || VIEWS[currentViewRef.current].category === 'testing3') && zoomedSector === null) {
+            bobT += 0.014;
+            balls.forEach(b => {
+              const amp = b.baseR * 0.22;
+              const tx = b.tx + Math.cos(bobT * 0.55 + b.phase) * amp * 0.35;
+              const ty = b.ty + Math.sin(bobT + b.phase) * amp;
+              b.x += (tx - b.x) * 0.05;
+              b.y += (ty - b.y) * 0.05;
               b.vx = 0; b.vy = 0;
             });
           } else {
@@ -863,7 +944,7 @@ export default function OrbsSketch() {
 
           (p.blendMode as (m: unknown) => void)(p.MULTIPLY);
           const curCat = VIEWS[currentViewRef.current].category;
-          const inClusterView = curCat === 'worksector' || curCat === 'testing';
+          const inClusterView = curCat === 'worksector' || curCat === 'testing' || curCat === 'testing2' || curCat === 'testing3';
           balls.forEach((b, i) => {
             // Lerp color toward target
             b.color[0] += (b.targetColor[0] - b.color[0]) * 0.04;
@@ -874,6 +955,7 @@ export default function OrbsSketch() {
             const scaleTarget = zoomedSector !== null && stories[i]?.category === zoomedSector ? 1.2
               : isHoveredCluster ? 1.1
               : curCat === 'testing' && zoomedSector === null ? 0.65
+              : (curCat === 'worksector' || curCat === 'testing2' || curCat === 'testing3') && zoomedSector === null ? 0.82
               : 1;
             b.displayScale += (scaleTarget - b.displayScale) * 0.08;
             b.displayAlpha += (2 - b.displayAlpha) * 0.07;
@@ -888,7 +970,7 @@ export default function OrbsSketch() {
           mouse.x = e.clientX; mouse.y = e.clientY;
           if (cursorEl) { cursorEl.style.left = e.clientX + 'px'; cursorEl.style.top = e.clientY + 'px'; }
 
-          const inWorksectorGrid = mode === 'grid' && (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing') && zoomedSector === null;
+          const inWorksectorGrid = mode === 'grid' && (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing' || VIEWS[currentViewRef.current].category === 'testing2' || VIEWS[currentViewRef.current].category === 'testing3') && zoomedSector === null;
 
           if (inWorksectorGrid) {
             // Detect cluster hover
@@ -942,7 +1024,7 @@ export default function OrbsSketch() {
           if (mode === 'freeform') {
             scatter(e.clientX, e.clientY);
           } else if (mode === 'grid') {
-            const inWorksectorGrid = (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing') && zoomedSector === null;
+            const inWorksectorGrid = (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing' || VIEWS[currentViewRef.current].category === 'testing2') && zoomedSector === null;
             if (inWorksectorGrid) {
               // Click on a cluster → zoom in
               for (const cat of ['healthcare', 'government', 'education']) {
