@@ -531,6 +531,12 @@ export default function OrbsSketch() {
           });
         }
 
+        const SECTOR_DISPLAY: Record<string, string> = {
+          healthcare: 'Healthcare',
+          government: 'Government',
+          education: 'Education',
+        };
+
         function enterZoom(sector: string) {
           zoomedSector = sector;
           const info = sectorInfo[sector];
@@ -541,6 +547,10 @@ export default function OrbsSketch() {
           // Hide cluster labels, show back indicator
           document.getElementById('cluster-labels')?.classList.remove('visible');
           document.getElementById('view-prev')?.classList.add('back-active');
+          // Show sector label above dots
+          const nameEl = document.getElementById('zoom-sector-name');
+          if (nameEl) nameEl.textContent = SECTOR_DISPLAY[sector] ?? sector;
+          setTimeout(() => document.getElementById('zoom-sector-label')?.classList.add('visible'), 300);
         }
 
         function exitZoom() {
@@ -561,6 +571,7 @@ export default function OrbsSketch() {
             }, 60);
           }
           document.getElementById('view-prev')?.classList.remove('back-active');
+          document.getElementById('zoom-sector-label')?.classList.remove('visible');
           // Show cluster labels after transition
           setTimeout(() => {
             if (zoomedSector === null && (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing' || VIEWS[currentViewRef.current].category === 'testing2' || VIEWS[currentViewRef.current].category === 'testing3')) {

@@ -110,6 +110,10 @@ export default function Home() {
 
       <div id="zoom-ripple" />
 
+      <div id="zoom-sector-label">
+        <span id="zoom-sector-name" />
+      </div>
+
       <div id="cluster-labels">
         <div className="cluster-label" id="label-healthcare">Healthcare</div>
         <div className="cluster-label" id="label-government">Government</div>
