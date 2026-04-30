@@ -54,10 +54,8 @@ export default function OrbsSketch() {
 
         const VIEWS = [
           { label: 'Default View', category: 'all' },
-          { label: 'Work Sector',  category: 'worksector' },
-          { label: 'Testing',      category: 'testing' },
-          { label: 'Testing 2',    category: 'testing2' },
-          { label: 'Testing 3',    category: 'testing3' },
+          { label: 'Work Sector',  category: 'testing2' },
+          { label: 'Colour',       category: 'testing3' },
         ];
 
         function setView(idx: number) {
@@ -566,7 +564,7 @@ export default function OrbsSketch() {
           if (label) {
             label.style.opacity = '0';
             setTimeout(() => {
-              label.textContent = returnCat === 'testing' ? 'Testing' : returnCat === 'testing2' ? 'Testing 2' : returnCat === 'testing3' ? 'Testing 3' : 'Work Sector';
+              label.textContent = VIEWS[currentViewRef.current].label;
               label.style.opacity = '1';
             }, 60);
           }
