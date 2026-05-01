@@ -317,7 +317,7 @@ body.grid-mode canvas { cursor: pointer; }
 
 /* Risk filter panel — appears below sector label when zoomed into a cluster */
 #risk-filter-panel {
-  position: fixed; left: 50%; top: 118px;
+  position: fixed; left: 50%; top: 108px;
   transform: translateX(-50%) translateY(6px);
   z-index: 95; pointer-events: none;
   display: flex; align-items: center; gap: 6px;
