@@ -31,9 +31,8 @@ export default function Home() {
 
       <div id="story-panel">
         <div id="story-inner">
-          <button id="story-close">×</button>
-          <h2 id="story-title" />
           <div id="story-tags" />
+          <h2 id="story-title" />
           <p id="story-body" />
         </div>
       </div>

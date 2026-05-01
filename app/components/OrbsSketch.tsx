@@ -659,11 +659,14 @@ export default function OrbsSketch() {
             const s = stories[i];
             if (!s.isPlaceholder) {
               const sc = SECTOR_COLORS[s.category] ?? [150, 130, 110];
-              const riskColor = s.risk === 'low' ? '#5A9E6F' : s.risk === 'medium' ? '#B07820' : '#A84530';
-              const riskBg   = s.risk === 'low' ? '#7BBF8A22' : s.risk === 'medium' ? '#E6A84022' : '#D16B5A22';
+              // Apply parchment MULTIPLY (242,237,225) so tag matches the canvas dot appearance
+              const mul = (c: number, bg: number) => Math.round(c * bg / 255);
+              const sectorBg = `rgb(${mul(sc[0],242)},${mul(sc[1],237)},${mul(sc[2],225)})`;
+              const riskBg = s.risk === 'low' ? '#7BBF8A' : s.risk === 'medium' ? '#E6A840' : '#D16B5A';
               const sectorLabel = SECTOR_DISPLAY[s.category] ?? s.category;
               const riskLabel = s.risk === 'low' ? 'Low Risk' : s.risk === 'medium' ? 'Medium Risk' : 'High Risk';
-              storyTagsEl.innerHTML = `<span class="story-tag" style="background:rgba(${sc[0]},${sc[1]},${sc[2]},0.13);color:rgb(${sc[0]},${sc[1]},${sc[2]})">${sectorLabel}</span><span class="story-tag" style="background:${riskBg};color:${riskColor}">${riskLabel}</span>`;
+              const lt = 'rgba(243,237,224,0.92)';
+              storyTagsEl.innerHTML = `<span class="story-tag" style="background:${sectorBg};color:${lt}">${sectorLabel}</span><span class="story-tag" style="background:${riskBg};color:${lt}">${riskLabel}</span>`;
               storyTagsEl.style.display = 'flex';
             } else {
               storyTagsEl.style.display = 'none';

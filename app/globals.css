@@ -55,11 +55,11 @@ body.grid-mode canvas { cursor: pointer; }
   position: relative;
   background: #f3ede0;
   border-radius: 0;
-  padding: 52px 56px 48px;
+  padding: 32px 36px 36px;
   width: min(560px, 92vw);
   max-height: 80vh;
   overflow-y: auto;
-  display: flex; flex-direction: column; gap: 22px;
+  display: flex; flex-direction: column; gap: 14px;
   font-family: 'Cactus Classical Serif', Georgia, serif; color: #1e1810;
   box-shadow: 0 12px 64px rgba(30, 24, 16, 0.18);
   transform: scale(0.94) translateY(8px);
@@ -342,13 +342,12 @@ body.grid-mode canvas { cursor: pointer; }
 
 /* Story panel tags */
 #story-tags {
-  display: none; flex-wrap: wrap; gap: 7px;
-  margin-top: -6px;
+  display: none; flex-wrap: wrap; gap: 8px;
 }
 .story-tag {
-  font-family: -apple-system, sans-serif; font-size: 10px;
-  letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 3px 10px; border-radius: 38px; font-weight: 500;
+  font-family: -apple-system, sans-serif; font-size: 11px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 38px; font-weight: 500;
 }
 
 /* Form tag selectors (sector + risk level in share form) */
