@@ -35,6 +35,7 @@ export default function OrbsSketch() {
   spacingRef.current = Number(params.spacing) || 2.05;
 
   const currentViewRef = useRef(0);
+  const activeRiskRef = useRef<'all' | 'low' | 'medium' | 'high'>('all');
 
   useEffect(() => {
     let p5Instance: InstanceType<typeof import('p5')> | null = null;
@@ -549,6 +550,7 @@ export default function OrbsSketch() {
           const nameEl = document.getElementById('zoom-sector-name');
           if (nameEl) nameEl.textContent = SECTOR_DISPLAY[sector] ?? sector;
           setTimeout(() => document.getElementById('zoom-sector-label')?.classList.add('visible'), 300);
+          setTimeout(() => document.getElementById('risk-filter-panel')?.classList.add('visible'), 420);
         }
 
         function exitZoom() {
@@ -570,6 +572,11 @@ export default function OrbsSketch() {
           }
           document.getElementById('view-prev')?.classList.remove('back-active');
           document.getElementById('zoom-sector-label')?.classList.remove('visible');
+          document.getElementById('risk-filter-panel')?.classList.remove('visible');
+          activeRiskRef.current = 'all';
+          document.querySelectorAll('.risk-btn').forEach(btn => {
+            (btn as HTMLElement).classList.toggle('active', (btn as HTMLElement).dataset.risk === 'all');
+          });
           // Show cluster labels after transition
           setTimeout(() => {
             if (zoomedSector === null && (VIEWS[currentViewRef.current].category === 'worksector' || VIEWS[currentViewRef.current].category === 'testing' || VIEWS[currentViewRef.current].category === 'testing2' || VIEWS[currentViewRef.current].category === 'testing3')) {
@@ -579,24 +586,53 @@ export default function OrbsSketch() {
           }, 900);
         }
 
-        type Story = { title: string; body: string; isPlaceholder: boolean; category: string };
+        type Story = { title: string; body: string; isPlaceholder: boolean; category: string; risk: 'low' | 'medium' | 'high' };
 
         const REAL_STORIES: Story[] = [
-          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false, category: 'government' },
-          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false, category: 'healthcare' },
-          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false, category: 'education' },
-          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false, category: 'healthcare' },
-          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false, category: 'healthcare' },
-          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false, category: 'education' },
-          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false, category: 'government' },
-          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false, category: 'healthcare' },
-          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false, category: 'healthcare' },
-          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false, category: 'education' },
-          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false, category: 'education' },
-          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false, category: 'government' },
-          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false, category: 'government' },
-          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false, category: 'healthcare' },
-          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false, category: 'healthcare' },
+          { title: 'The hour I get back every day', body: 'I used to spend the first 90 minutes of every morning just triaging emails and writing status updates. Now I do that in 15. I don\'t think about it much anymore — it just happens, quietly, in the background.\n\n— Dr. M. Patel', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'A second opinion that never sleeps', body: 'When I\'m stuck on a differential at midnight, I\'ll talk through the case out loud — well, in text — and something about externalising the reasoning helps. It catches things I\'ve anchored on.\n\n— Anonymous', isPlaceholder: false, category: 'healthcare', risk: 'medium' },
+          { title: 'Onboarding used to take four weeks', body: 'We had a new coordinator start in January. She was fully independent by day six. The AI handled the document checklist, the policy Q&A, the system walkthroughs. I just did the human parts.\n\n— J. Thornton', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'I stopped dreading the chart notes', body: 'I became a nurse to be with patients, not to type. For two years the notes felt like a second job. Now I review and sign instead of starting from scratch. That difference is enormous.\n\n— R. Okafor', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'It asked me a question I hadn\'t thought to ask', body: 'I was drafting a care plan and the AI flagged a potential interaction I\'d overlooked. Not alarming — just a quiet nudge. That\'s the version of this I trust.\n\n— S. Nguyen', isPlaceholder: false, category: 'healthcare', risk: 'medium' },
+          { title: 'My research assistant doesn\'t need sleep', body: 'I\'m a PhD student. Literature reviews used to eat weeks. I still read everything myself — I have to — but now I know what I need to read first.\n\n— Anonymous', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'The meeting summary no one wanted to write', body: 'Every week someone had to turn 45 minutes of discussion into three bullet points and a decision log. We rotated the misery. Now it\'s just done by the time we close the call.\n\n— T. Eze', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'Writing felt impossible after my accident', body: 'I have a tremor now. Typing long documents was frustrating and slow. Voice-to-structured-text changed what I can produce in a day. I don\'t think I could do this job otherwise.\n\n— P. Walsh', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'It translated the jargon for my patient\'s family', body: 'We had a family who spoke limited English and were frightened. I used it to draft a plain-language summary of the diagnosis. The relief on their faces when they understood — that mattered.\n\n— Dr. A. Sinha', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'Not a replacement, a rehearsal space', body: 'I use it to stress-test arguments before I present them. If it can find the hole in my reasoning, so can my colleagues. It\'s like having a very patient devil\'s advocate on call.\n\n— C. Moreau', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'The grant proposal I almost didn\'t write', body: 'I had the idea but not the bandwidth. I talked through the concept, got a rough structure back, and spent my actual energy on the science. We got the funding.\n\n— Dr. K. Lindqvist', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'Scheduling across six time zones', body: 'Our team is genuinely global. The logistics used to be a puzzle I solved manually every week. Now it\'s handled. I just confirm.\n\n— B. Adeyemi', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'It helped me write my first performance review', body: 'I was promoted to manager at 27 and had no idea how to give structured feedback in writing. I\'d talk through what I wanted to say, and it helped me find the words that were fair and clear.\n\n— Anonymous', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'The patient portal messages were drowning us', body: 'We were getting 200+ messages a week. Now the routine ones — refill requests, appointment questions — are drafted for review before anyone touches them. We actually respond same-day now.\n\n— M. Castillo', isPlaceholder: false, category: 'healthcare', risk: 'medium' },
+          { title: 'I used it to understand my own diagnosis', body: 'The specialist used terms I didn\'t know. I went home and had it explained to me in plain language, then came back with real questions. I felt like a participant in my own care.\n\n— F. Bergström', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'Discharge instructions that actually land', body: 'We were handing patients a four-page PDF on their way out. Nobody read it. Now we generate a one-page plain-language summary tailored to what they were actually admitted for. Readmissions in our unit dropped.\n\n— L. Fairbanks', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'The triage flag I almost missed', body: 'At 2am, running on fours hours of sleep, I missed a lab trend that the AI flagged. I\'m not sure I would have caught it in time. That one still sits with me.\n\n— Anonymous', isPlaceholder: false, category: 'healthcare', risk: 'high' },
+          { title: 'My patients with low literacy finally get it', body: 'I work in a community clinic. A lot of my patients struggle with written instructions. Now I can generate materials at a fifth-grade reading level in under a minute. That used to take me 20.\n\n— Dr. O. Fernández', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'It surfaced a pattern across 800 patients', body: 'I\'m a researcher. We had a dataset I\'d been sitting on for months because the analysis felt overwhelming. Within a week of using AI-assisted tooling I had a hypothesis worth testing.\n\n— Dr. Y. Tanaka', isPlaceholder: false, category: 'healthcare', risk: 'medium' },
+          { title: 'Consent forms in six languages', body: 'Our hospital serves a neighbourhood where English is a second language for most patients. We use AI to produce consent form translations that our bilingual staff then review. Throughput is up. Errors are down.\n\n— H. Reyes', isPlaceholder: false, category: 'healthcare', risk: 'medium' },
+          { title: 'I finally have time to sit with patients', body: 'Documentation was stealing 90 minutes from every shift. I\'d go home exhausted from typing, not from caring. That ratio has flipped. I remember why I became a doctor again.\n\n— Dr. B. Osei', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'It recommended a medication I wouldn\'t have chosen', body: 'The AI flagged an alternative treatment backed by three studies I hadn\'t read. I reviewed them, consulted a colleague, and changed the plan. The patient did better. But it made me think hard about trust.\n\n— Anonymous', isPlaceholder: false, category: 'healthcare', risk: 'high' },
+          { title: 'Scheduling that doesn\'t break people', body: 'Nurse scheduling in our ward used to cause arguments every month. Now the AI generates a first draft that accounts for preferences, seniority, and coverage minimums. People still negotiate — but from a fair starting point.\n\n— C. Nakamura', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'The referral letters write themselves', body: 'I do about 30 referrals a week. Each one used to take 10 minutes to draft. Now I review and sign. That\'s four hours back. I use them to see more patients.\n\n— Dr. R. Mehta', isPlaceholder: false, category: 'healthcare', risk: 'low' },
+          { title: 'Summarising 40 years of policy in an afternoon', body: 'We needed a briefing on the legislative history of a regulation that predated most of my team. I used AI to digest the archive and produce a working summary. It wasn\'t perfect. But it was a start.\n\n— P. Drummond', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'Constituent letters that don\'t sound like form letters', body: 'We receive thousands of letters a month. The AI drafts personalised responses keyed to the specific issue raised. Our approval rating on correspondence went up 18 points in the first quarter.\n\n— M. Johanssen', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'It flagged the anomaly before the audit did', body: 'Our team uses AI to scan procurement records for irregular patterns. It flagged a cluster of small-value contracts that would have slipped through manual review. That\'s the version of this I can defend.\n\n— Anonymous', isPlaceholder: false, category: 'government', risk: 'medium' },
+          { title: 'The benefits form no one could finish', body: 'Our disability application was 28 pages. Completion rates were low. Denials were high. I used AI to prototype a conversational version. Completion is up. So are approvals. But I still wonder who we\'re missing.\n\n— J. Okafor', isPlaceholder: false, category: 'government', risk: 'high' },
+          { title: 'Translation at the speed of need', body: 'In emergency response, we have minutes to communicate evacuation instructions to communities that speak 14 different languages. AI translation plus human review got us there. It would have been impossible otherwise.\n\n— T. Vasquez', isPlaceholder: false, category: 'government', risk: 'medium' },
+          { title: 'Policy analysis used to take a week', body: 'Before a vote, we\'d need days to summarise the implications of a bill. Now I can have a structured briefing in two hours. I still read it critically — the AI has been wrong — but I start from a much better position.\n\n— R. Castillo', isPlaceholder: false, category: 'government', risk: 'medium' },
+          { title: 'Freedom of information, faster', body: 'We process hundreds of FOI requests monthly. The time from receipt to response used to average 22 days. The AI handles the initial classification and redaction review. We\'re down to 9.\n\n— A. Whitfield', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'Budget reports that junior staff can actually write', body: 'We had analysts spending three days formatting and narrating budget tables. Now they spend three hours — and learn more in the process because the AI surfaces comparisons they hadn\'t considered.\n\n— D. Mbeki', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'The compliance gap we didn\'t know we had', body: 'A routine AI-assisted review of our procurement policies flagged 14 clauses that no longer met updated federal guidelines. We fixed them before the inspection. I don\'t want to think about what happens if we hadn\'t.\n\n— L. Sørensen', isPlaceholder: false, category: 'government', risk: 'medium' },
+          { title: 'Public consultation, actually consulted', body: 'We ran a planning consultation that generated 4,000 submissions. I used AI to cluster and theme them so the committee could genuinely engage with the range of views. First time we\'ve ever done that.\n\n— F. Patel', isPlaceholder: false, category: 'government', risk: 'low' },
+          { title: 'My feedback used to be a paragraph. Now it\'s a conversation.', body: 'I teach 180 students. Detailed written feedback wasn\'t possible at that scale. Now I give voice notes, the AI structures them, and students get something specific. Engagement in my course went up noticeably.\n\n— Prof. A. Mbeki', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'The student I almost gave up on', body: 'She wasn\'t engaging with written feedback. I used an AI tutoring tool to let her work through the same concepts in a conversational way. She passed. I still think about how many students I might have missed before.\n\n— T. Lindqvist', isPlaceholder: false, category: 'education', risk: 'medium' },
+          { title: 'Lesson plans that adapt to the room', body: 'I teach in a school where reading levels in one class can span six years. AI helps me differentiate materials quickly — same concept, three different entry points. I couldn\'t do it by hand for every lesson.\n\n— C. Obi', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'My dyslexic students have a chance now', body: 'I work with students with learning differences. AI-powered text-to-speech and reformatting tools have changed what they can access independently. Some of them read more than they ever have.\n\n— S. Riordan', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'Research methodology explained at 11pm', body: 'My PhD students message at all hours. Now I tell them to try working through it with the AI first. Half the time they solve it themselves. The other half, they come to me with a much better-formed question.\n\n— Prof. R. Nakamura', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'Grading that might be more consistent than I am', body: 'I piloted AI-assisted grading on short-answer questions against my own marks. The correlation was high — and it caught some inconsistencies in my rubric that I\'d been applying unevenly. That was humbling.\n\n— Anonymous', isPlaceholder: false, category: 'education', risk: 'high' },
+          { title: 'Admin that was eating my research time', body: 'As department chair I was spending 30% of my time on scheduling, reporting, and correspondence. Getting that down to 15% gave me back a day a week. I\'ve restarted the paper I abandoned in 2021.\n\n— Prof. K. Okonkwo', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'The curriculum review we\'d been delaying for years', body: 'We had a programme review due and no bandwidth. AI helped us analyse graduate outcome data against learning objectives and surface misalignments. It took two weeks instead of six months.\n\n— Dr. M. Álvarez', isPlaceholder: false, category: 'education', risk: 'low' },
+          { title: 'Students gaming the system', body: 'I introduced AI-assisted writing support. Then I noticed work getting better and thinking getting shallower. I don\'t think the tool is the problem — but I had to redesign my assessments completely, and I\'m still not sure I got it right.\n\n— Anonymous', isPlaceholder: false, category: 'education', risk: 'high' },
+          { title: 'Early warning, early help', body: 'We built a dashboard that flags students whose engagement patterns suggest they\'re struggling — before a missed deadline becomes a dropped module. Pastoral referrals are up. Withdrawals are down. But we talk a lot about what the data means.\n\n— J. Fairweather', isPlaceholder: false, category: 'education', risk: 'medium' },
         ];
 
         const WORK_SECTOR_CATS = ['healthcare', 'government', 'education'];
@@ -605,7 +641,7 @@ export default function OrbsSketch() {
           const arr: Story[] = [...REAL_STORIES];
           while (arr.length < count) {
             const cat = WORK_SECTOR_CATS[arr.length % WORK_SECTOR_CATS.length];
-            arr.push({ title: `Story ${arr.length + 1}`, body: 'This story is coming soon.', isPlaceholder: true, category: cat });
+            arr.push({ title: `Story ${arr.length + 1}`, body: 'This story is coming soon.', isPlaceholder: true, category: cat, risk: 'low' as const });
           }
           return arr.slice(0, count);
         }
@@ -616,8 +652,23 @@ export default function OrbsSketch() {
           const storyTitle = document.getElementById('story-title');
           const storyBody = document.getElementById('story-body');
           const storyPanel = document.getElementById('story-panel');
+          const storyTagsEl = document.getElementById('story-tags');
           if (storyTitle) storyTitle.textContent = stories[i].title;
           if (storyBody) storyBody.textContent = stories[i].body;
+          if (storyTagsEl) {
+            const s = stories[i];
+            if (!s.isPlaceholder) {
+              const sc = SECTOR_COLORS[s.category] ?? [150, 130, 110];
+              const riskColor = s.risk === 'low' ? '#5A9E6F' : s.risk === 'medium' ? '#B07820' : '#A84530';
+              const riskBg   = s.risk === 'low' ? '#7BBF8A22' : s.risk === 'medium' ? '#E6A84022' : '#D16B5A22';
+              const sectorLabel = SECTOR_DISPLAY[s.category] ?? s.category;
+              const riskLabel = s.risk === 'low' ? 'Low Risk' : s.risk === 'medium' ? 'Medium Risk' : 'High Risk';
+              storyTagsEl.innerHTML = `<span class="story-tag" style="background:rgba(${sc[0]},${sc[1]},${sc[2]},0.13);color:rgb(${sc[0]},${sc[1]},${sc[2]})">${sectorLabel}</span><span class="story-tag" style="background:${riskBg};color:${riskColor}">${riskLabel}</span>`;
+              storyTagsEl.style.display = 'flex';
+            } else {
+              storyTagsEl.style.display = 'none';
+            }
+          }
           storyPanel?.classList.add('open');
         }
 
@@ -729,7 +780,10 @@ export default function OrbsSketch() {
           }, 28);
         }
 
-        function spawnNewBall(title: string, body: string, name: string) {
+        let selectedStoryCategory = 'healthcare';
+        let selectedStoryRisk: 'low' | 'medium' | 'high' = 'low';
+
+        function spawnNewBall(title: string, body: string, name: string, category: string, risk: 'low' | 'medium' | 'high') {
           const newIdx = balls.length;
           const nb = new Ball(newIdx, balls.length + 1);
           nb.x = W * 0.5 + (Math.random() - 0.5) * 60;
@@ -740,7 +794,7 @@ export default function OrbsSketch() {
           nb.ty = H * 0.5 + Math.sin(angle) * Math.min(W, H) * 0.28;
           nb.vx = 0; nb.vy = -2.5;
           balls.push(nb);
-          stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false, category: 'healthcare' });
+          stories.push({ title, body: body + '\n\n— ' + name, isPlaceholder: false, category, risk });
           if (mode === 'grid') {
             mode = 'transitioning';
             setTimeout(() => { mode = 'grid'; }, 2200);
@@ -756,6 +810,14 @@ export default function OrbsSketch() {
           if (fieldBody) fieldBody.value = '';
           if (fieldTitle) fieldTitle.value = '';
           hintStep = 0;
+          selectedStoryCategory = 'healthcare';
+          selectedStoryRisk = 'low';
+          document.querySelectorAll('#form-category-row .form-tag-btn').forEach(btn => {
+            (btn as HTMLElement).classList.toggle('active', (btn as HTMLElement).dataset.cat === 'healthcare');
+          });
+          document.querySelectorAll('#form-risk-row .form-tag-btn').forEach(btn => {
+            (btn as HTMLElement).classList.toggle('active', (btn as HTMLElement).dataset.riskLevel === 'low');
+          });
           overlay?.classList.add('open');
           showStep(1);
         }
@@ -824,6 +886,17 @@ export default function OrbsSketch() {
             });
           });
 
+          document.querySelectorAll('.risk-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const risk = (btn as HTMLElement).dataset.risk as 'all' | 'low' | 'medium' | 'high';
+              activeRiskRef.current = risk;
+              document.querySelectorAll('.risk-btn').forEach(b => {
+                (b as HTMLElement).classList.toggle('active', b === btn);
+              });
+            });
+          });
+
           document.getElementById('story-close')?.addEventListener('click', () => {
             document.getElementById('story-panel')?.classList.remove('open');
           });
@@ -879,10 +952,10 @@ export default function OrbsSketch() {
               || (document.getElementById('preview-title-display')?.textContent ?? '');
             const slotIndex = stories.findIndex(s => s.isPlaceholder);
             if (slotIndex !== -1) {
-              stories[slotIndex] = { title, body: body + '\n\n— ' + name, isPlaceholder: false, category: stories[slotIndex].category };
+              stories[slotIndex] = { title, body: body + '\n\n— ' + name, isPlaceholder: false, category: selectedStoryCategory, risk: selectedStoryRisk };
               flashBlob(slotIndex);
             } else {
-              spawnNewBall(title, body, name);
+              spawnNewBall(title, body, name, selectedStoryCategory, selectedStoryRisk);
             }
             submitBtn.classList.add('submitting');
             submitBtn.textContent = 'Finding its place…';
@@ -891,6 +964,24 @@ export default function OrbsSketch() {
               submitBtn.textContent = 'Add to canvas';
               closeOverlay();
             }, 1900);
+          });
+
+          document.querySelectorAll('#form-category-row .form-tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              selectedStoryCategory = (btn as HTMLElement).dataset.cat!;
+              document.querySelectorAll('#form-category-row .form-tag-btn').forEach(b => {
+                (b as HTMLElement).classList.toggle('active', b === btn);
+              });
+            });
+          });
+
+          document.querySelectorAll('#form-risk-row .form-tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              selectedStoryRisk = (btn as HTMLElement).dataset.riskLevel as 'low' | 'medium' | 'high';
+              document.querySelectorAll('#form-risk-row .form-tag-btn').forEach(b => {
+                (b as HTMLElement).classList.toggle('active', b === btn);
+              });
+            });
           });
 
           document.getElementById('share-btn')?.addEventListener('click', openOverlay);
@@ -1004,7 +1095,8 @@ export default function OrbsSketch() {
               : (curCat === 'worksector' || curCat === 'testing2' || curCat === 'testing3') && zoomedSector === null ? 0.82
               : 1;
             b.displayScale += (scaleTarget - b.displayScale) * 0.08;
-            b.displayAlpha += (2 - b.displayAlpha) * 0.07;
+            const alphaTarget = zoomedSector !== null && activeRiskRef.current !== 'all' && stories[i]?.risk !== activeRiskRef.current ? 0.15 : 2;
+            b.displayAlpha += (alphaTarget - b.displayAlpha) * 0.07;
             const savedR = b.r;
             b.r *= b.displayScale;
             renderWatercolour(b, dotCountRef.current);
@@ -1041,7 +1133,21 @@ export default function OrbsSketch() {
               const blobTooltip = document.getElementById('blob-tooltip');
               const tipTitle = document.getElementById('tip-title');
               if (hit !== -1) {
-                if (tipTitle) tipTitle.textContent = stories[hit].title;
+                const s = stories[hit];
+                if (tipTitle) tipTitle.textContent = s.title;
+                const tipTags = document.getElementById('tip-tags');
+                if (tipTags) {
+                  if (!s.isPlaceholder) {
+                    const sc = SECTOR_COLORS[s.category] ?? [150, 130, 110];
+                    const riskColor = s.risk === 'low' ? '#7BBF8A' : s.risk === 'medium' ? '#E6A840' : '#D16B5A';
+                    const sectorLabel = SECTOR_DISPLAY[s.category] ?? s.category;
+                    const riskLabel = s.risk === 'low' ? 'Low Risk' : s.risk === 'medium' ? 'Medium Risk' : 'High Risk';
+                    tipTags.innerHTML = `<span class="tip-tag" style="background:rgb(${sc[0]},${sc[1]},${sc[2]})">${sectorLabel}</span><span class="tip-tag" style="background:${riskColor}">${riskLabel}</span>`;
+                    tipTags.style.display = 'flex';
+                  } else {
+                    tipTags.style.display = 'none';
+                  }
+                }
                 blobTooltip?.classList.add('visible');
               } else {
                 blobTooltip?.classList.remove('visible');

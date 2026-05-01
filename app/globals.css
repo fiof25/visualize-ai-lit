@@ -299,7 +299,7 @@ body.grid-mode canvas { cursor: pointer; }
 
 /* Zoom sector label — shown above dots when drilling into a group */
 #zoom-sector-label {
-  position: fixed; left: 50%; top: 82px;
+  position: fixed; left: 50%; top: 78px;
   transform: translateX(-50%) translateY(6px);
   z-index: 95; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
@@ -313,4 +313,72 @@ body.grid-mode canvas { cursor: pointer; }
 #zoom-sector-name {
   font-family: 'Cactus Classical Serif', Georgia, serif;
   font-size: 16px; color: rgba(30, 24, 16, 0.65); letter-spacing: 0.01em;
+}
+
+/* Risk filter panel — appears below sector label when zoomed into a cluster */
+#risk-filter-panel {
+  position: fixed; left: 50%; top: 118px;
+  transform: translateX(-50%) translateY(6px);
+  z-index: 95; pointer-events: none;
+  display: flex; align-items: center; gap: 6px;
+  opacity: 0;
+  transition: opacity 0.38s ease, transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#risk-filter-panel.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+.risk-btn {
+  padding: 5px 13px;
+  border: 0.5px solid rgba(30, 24, 16, 0.28); border-radius: 38px;
+  background: rgba(237, 231, 216, 0.85); cursor: pointer;
+  font-family: -apple-system, sans-serif; font-size: 11px;
+  letter-spacing: 0.04em; color: rgba(30, 24, 16, 0.50);
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.risk-btn:hover { color: #1e1810; border-color: rgba(30, 24, 16, 0.55); }
+.risk-btn.active { background: #1e1810; color: #f3ede0; border-color: #1e1810; }
+
+/* Story panel tags */
+#story-tags {
+  display: none; flex-wrap: wrap; gap: 7px;
+  margin-top: -6px;
+}
+.story-tag {
+  font-family: -apple-system, sans-serif; font-size: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 38px; font-weight: 500;
+}
+
+/* Form tag selectors (sector + risk level in share form) */
+.form-tag-group { display: flex; flex-direction: column; gap: 10px; margin-top: -8px; }
+.form-tag-label {
+  font-family: -apple-system, sans-serif; font-size: 10px;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: rgba(60, 45, 25, 0.38);
+}
+.form-tag-row { display: flex; gap: 7px; flex-wrap: wrap; }
+.form-tag-btn {
+  padding: 6px 14px;
+  border: 0.5px solid rgba(30, 24, 16, 0.22); border-radius: 38px;
+  background: transparent; cursor: pointer;
+  font-family: -apple-system, sans-serif; font-size: 12px;
+  color: rgba(30, 24, 16, 0.48);
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.form-tag-btn:hover { color: #1e1810; border-color: rgba(30, 24, 16, 0.50); }
+.form-tag-btn.active { background: #1e1810; color: #f3ede0; border-color: #1e1810; }
+
+/* Tooltip tag pills */
+.tip-tags {
+  display: none; flex-wrap: nowrap; gap: 8px;
+  margin-bottom: 11px;
+}
+.tip-tag {
+  font-family: -apple-system, sans-serif; font-size: 9px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 38px;
+  color: rgba(30, 24, 16, 0.85);
+  white-space: nowrap;
 }

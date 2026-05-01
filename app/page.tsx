@@ -26,13 +26,14 @@ export default function Home() {
 
       <div id="blob-tooltip">
         <div className="tip-title" id="tip-title" />
-        <div className="tip-body" id="tip-body" />
+        <div id="tip-tags" className="tip-tags" />
       </div>
 
       <div id="story-panel">
         <div id="story-inner">
           <button id="story-close">×</button>
           <h2 id="story-title" />
+          <div id="story-tags" />
           <p id="story-body" />
         </div>
       </div>
@@ -72,6 +73,20 @@ export default function Home() {
             <div className="form-step" data-step="3">
               <div className="form-prompt" id="prompt-3" />
               <input id="field-title" type="text" className="form-field" autoComplete="off" />
+              <div className="form-tag-group">
+                <div className="form-tag-label">Work Sector</div>
+                <div className="form-tag-row" id="form-category-row">
+                  <button className="form-tag-btn active" data-cat="healthcare">Healthcare</button>
+                  <button className="form-tag-btn" data-cat="government">Government</button>
+                  <button className="form-tag-btn" data-cat="education">Education</button>
+                </div>
+                <div className="form-tag-label">Risk Level</div>
+                <div className="form-tag-row" id="form-risk-row">
+                  <button className="form-tag-btn active" data-risk-level="low">Low</button>
+                  <button className="form-tag-btn" data-risk-level="medium">Medium</button>
+                  <button className="form-tag-btn" data-risk-level="high">High</button>
+                </div>
+              </div>
               <div className="form-nav">
                 <button className="back-btn" data-back="2"><span>←</span> Back</button>
                 <button className="next-btn" data-next="4">Preview <span>→</span></button>
@@ -112,6 +127,13 @@ export default function Home() {
 
       <div id="zoom-sector-label">
         <span id="zoom-sector-name" />
+      </div>
+
+      <div id="risk-filter-panel">
+        <button className="risk-btn active" data-risk="all">All</button>
+        <button className="risk-btn" data-risk="low">Low Risk</button>
+        <button className="risk-btn" data-risk="medium">Medium Risk</button>
+        <button className="risk-btn" data-risk="high">High Risk</button>
       </div>
 
       <div id="cluster-labels">
