@@ -622,13 +622,17 @@ export default function OrbsSketch() {
         }
 
         function typewriter(el: HTMLElement, text: string, onDone?: () => void) {
+          (el as any).__cancelTypewriter?.();
           el.innerHTML = '';
           const caret = document.createElement('span');
           caret.className = 'caret';
           el.appendChild(caret);
           let i = 0;
+          let active = true;
+          (el as any).__cancelTypewriter = () => { active = false; };
           const BASE = 36;
           function tick() {
+            if (!active) return;
             if (i < text.length) {
               el.insertBefore(document.createTextNode(text[i]), caret);
               i++;
@@ -646,7 +650,7 @@ export default function OrbsSketch() {
         const PROMPTS = [
           null,
           "What's your name?",
-          "How do you use AI? Tell me about your experience.",
+          null,
           "Give it a title.",
           "Here's your story.",
         ];
@@ -658,6 +662,22 @@ export default function OrbsSketch() {
         ];
         let currentStep = 1;
 
+        const STORY_HINTS = [
+          'Think of a specific task you did today. What was it?',
+          'What was the most time-consuming or draining part of it?',
+          'What if an AI could handle that part automatically, every time?',
+          'What if this tool was free and everyone in your field had it tomorrow?',
+          'What if it could do your entire job? What would still need you?',
+        ];
+        let hintStep = 0;
+
+        function showHint(n: number) {
+          hintStep = n;
+          const promptEl = document.getElementById('prompt-2');
+          if (promptEl) typewriter(promptEl, STORY_HINTS[n]);
+          setTimeout(() => (document.getElementById('field-body') as HTMLTextAreaElement)?.focus(), 280);
+        }
+
         function showStep(n: number) {
           const formSteps = document.querySelectorAll('.form-step');
           const stepDots = document.querySelectorAll('.step-dot');
@@ -665,10 +685,14 @@ export default function OrbsSketch() {
           const step = document.querySelector(`.form-step[data-step="${n}"]`);
           step?.classList.add('active');
           stepDots.forEach(d => (d as HTMLElement).classList.toggle('active', +(d as HTMLElement).dataset.step! === n));
-          const promptEl = document.getElementById(`prompt-${n}`);
-          if (PROMPTS[n] && promptEl) typewriter(promptEl, PROMPTS[n]!);
-          const field = step?.querySelector('.form-field') as HTMLElement;
-          if (field) setTimeout(() => field.focus(), 280);
+          if (n === 2) {
+            showHint(hintStep);
+          } else {
+            const promptEl = document.getElementById(`prompt-${n}`);
+            if (PROMPTS[n] && promptEl) typewriter(promptEl, PROMPTS[n]!);
+            const field = step?.querySelector('.form-field') as HTMLElement;
+            if (field) setTimeout(() => field.focus(), 280);
+          }
           currentStep = n;
         }
 
@@ -731,7 +755,7 @@ export default function OrbsSketch() {
           if (fieldName) fieldName.value = '';
           if (fieldBody) fieldBody.value = '';
           if (fieldTitle) fieldTitle.value = '';
-          p.noLoop();
+          hintStep = 0;
           overlay?.classList.add('open');
           showStep(1);
         }
@@ -739,7 +763,6 @@ export default function OrbsSketch() {
         function closeOverlay() {
           const overlay = document.getElementById('story-form-overlay');
           overlay?.classList.remove('open');
-          setTimeout(() => { p.loop(); }, 420);
         }
 
         function reinitBalls(count: number) {
@@ -814,8 +837,14 @@ export default function OrbsSketch() {
               if (currentStep === 1 && !(document.getElementById('field-name') as HTMLInputElement)?.value.trim()) {
                 (document.getElementById('field-name') as HTMLInputElement)?.focus(); return;
               }
-              if (currentStep === 2 && !(document.getElementById('field-body') as HTMLTextAreaElement)?.value.trim()) {
-                (document.getElementById('field-body') as HTMLTextAreaElement)?.focus(); return;
+              if (currentStep === 2) {
+                if (hintStep < STORY_HINTS.length - 1) {
+                  showHint(hintStep + 1);
+                  return;
+                }
+                if (!(document.getElementById('field-body') as HTMLTextAreaElement)?.value.trim()) {
+                  (document.getElementById('field-body') as HTMLTextAreaElement)?.focus(); return;
+                }
               }
               const next = +(btn as HTMLElement).dataset.next!;
               if (next === 4) populatePreview();
@@ -824,7 +853,15 @@ export default function OrbsSketch() {
           });
 
           document.querySelectorAll('.back-btn').forEach(btn => {
-            btn.addEventListener('click', () => showStep(+(btn as HTMLElement).dataset.back!));
+            btn.addEventListener('click', () => {
+              const back = +(btn as HTMLElement).dataset.back!;
+              if (currentStep === 2 && hintStep > 0) {
+                showHint(hintStep - 1);
+                return;
+              }
+              if (back === 2) hintStep = STORY_HINTS.length - 1;
+              showStep(back);
+            });
           });
 
           ['field-name', 'field-title'].forEach(id => {

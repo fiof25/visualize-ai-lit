@@ -56,7 +56,7 @@ export default function Home() {
               <div className="form-prompt" id="prompt-1" />
               <input id="field-name" type="text" className="form-field" autoComplete="off" />
               <div className="form-nav">
-                <button className="next-btn" data-next="2">Continue →</button>
+                <button className="next-btn" data-next="2">Continue <span>→</span></button>
               </div>
             </div>
 
@@ -64,8 +64,8 @@ export default function Home() {
               <div className="form-prompt" id="prompt-2" />
               <textarea id="field-body" className="form-field form-textarea" />
               <div className="form-nav">
-                <button className="back-btn" data-back="1">← Back</button>
-                <button className="next-btn" data-next="3">Continue →</button>
+                <button className="back-btn" data-back="1"><span>←</span> Back</button>
+                <button className="next-btn" data-next="3">Continue <span>→</span></button>
               </div>
             </div>
 
@@ -73,8 +73,8 @@ export default function Home() {
               <div className="form-prompt" id="prompt-3" />
               <input id="field-title" type="text" className="form-field" autoComplete="off" />
               <div className="form-nav">
-                <button className="back-btn" data-back="2">← Back</button>
-                <button className="next-btn" data-next="4">Preview →</button>
+                <button className="back-btn" data-back="2"><span>←</span> Back</button>
+                <button className="next-btn" data-next="4">Preview <span>→</span></button>
               </div>
             </div>
 
@@ -86,7 +86,7 @@ export default function Home() {
                 <div id="preview-author-display" />
               </div>
               <div className="form-nav">
-                <button className="back-btn" data-back="3">← Edit</button>
+                <button className="back-btn" data-back="3"><span>←</span> Edit</button>
                 <button id="submit-story-btn">Add to canvas</button>
               </div>
             </div>
