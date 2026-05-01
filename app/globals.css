@@ -28,16 +28,14 @@ canvas { display: block; }
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   z-index: 100;
-  display: flex; align-items: center; gap: 9px;
-  padding: 15px 27px;
-  border: 0.5px solid black; border-radius: 38px;
-  cursor: pointer; background: black; color: #f3ede0;
-  font-size: 18px; white-space: nowrap; text-decoration: none;
-  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  background: none; border: none; padding: 0;
+  font-family: 'Cactus Classical Serif', Georgia, serif;
+  font-size: 15px; font-weight: 400;
+  letter-spacing: 0.01em;
+  color: rgba(30, 24, 16, 0.45);
+  white-space: nowrap; text-decoration: none; cursor: default;
+  transition: opacity 0.5s ease;
 }
-#enter-btn:hover { background: transparent; color: black; border-color: black; }
-#enter-btn .btn-label { font-family: 'Cactus Classical Serif', Georgia, serif; font-weight: 400; }
-#enter-btn .btn-arrow { font-family: -apple-system, 'SF Pro Text', sans-serif; font-size: 16px; line-height: 1; position: relative; top: 1px; }
 
 body.grid-mode { cursor: default; }
 body.grid-mode canvas { cursor: pointer; }

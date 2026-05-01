@@ -997,10 +997,9 @@ export default function OrbsSketch() {
             if (e.key === 'Escape' && overlay?.classList.contains('open')) closeOverlay();
           });
 
-          document.getElementById('enter-btn')?.addEventListener('click', e => {
-            e.preventDefault(); e.stopPropagation();
+          const handleEnter = () => {
             if (mode !== 'freeform') return;
-            // Always land on Default View (grid) when entering
+            document.removeEventListener('click', handleEnter);
             localViewIdx = 0;
             currentViewRef.current = 0;
             const label = document.getElementById('view-label');
@@ -1021,7 +1020,8 @@ export default function OrbsSketch() {
                 viewToggle.classList.add('visible');
               }));
             }, 1600);
-          });
+          };
+          document.addEventListener('click', handleEnter);
         };
 
         p.windowResized = () => {

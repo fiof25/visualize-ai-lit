@@ -19,10 +19,7 @@ export default function Home() {
         <span className="btn-label">Org View</span>
       </a>
 
-      <a id="enter-btn" href="#">
-        <span className="btn-label">Enter</span>
-        <span className="btn-arrow">→</span>
-      </a>
+      <div id="enter-btn">Click anywhere to enter</div>
 
       <div id="blob-tooltip">
         <div className="tip-title" id="tip-title" />
