@@ -987,11 +987,10 @@ export default function OrbsSketch() {
             if (e.key === 'Escape' && overlay?.classList.contains('open')) closeOverlay();
           });
 
-          document.getElementById('enter-btn')?.addEventListener('click', e => {
-            e.preventDefault(); e.stopPropagation();
+          const handleEnter = () => {
             if (mode !== 'freeform') return;
+            document.removeEventListener('click', handleEnter);
             hasEntered = true;
-            // Always land on Default View (grid) when entering
             localViewIdx = 0;
             currentViewRef.current = 0;
             const label = document.getElementById('view-label');
@@ -1012,7 +1011,8 @@ export default function OrbsSketch() {
                 viewToggle.classList.add('visible');
               }));
             }, 1600);
-          });
+          };
+          document.addEventListener('click', handleEnter);
         };
 
         p.windowResized = () => {
@@ -1121,7 +1121,7 @@ export default function OrbsSketch() {
             }
           } else if (mode === 'grid') {
             hoveredCluster = null;
-            const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r);
+            const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r * 1.3);
             if (hit !== hoveredBlob) {
               hoveredBlob = hit;
               const blobTooltip = document.getElementById('blob-tooltip');
@@ -1168,7 +1168,7 @@ export default function OrbsSketch() {
                 }
               }
             } else {
-              const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r * b.displayScale);
+              const hit = balls.findIndex(b => Math.hypot(b.x - e.clientX, b.y - e.clientY) < b.r * b.displayScale * 1.3);
               if (hit !== -1) {
                 openStory(hit);
               } else if (zoomedSector !== null) {
