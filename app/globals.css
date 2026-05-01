@@ -55,7 +55,7 @@ body.grid-mode canvas { cursor: pointer; }
   position: relative;
   background: #f3ede0;
   border-radius: 0;
-  padding: 32px 36px 36px;
+  padding: 34px 36px 32px;
   width: min(560px, 92vw);
   max-height: 80vh;
   overflow-y: auto;
