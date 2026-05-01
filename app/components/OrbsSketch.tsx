@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useDialKit } from 'dialkit';
 
 const BASE_COUNT = 54;
 const BASE_RADIUS = 48;
@@ -13,26 +12,10 @@ function computeBaseR(count: number) {
 export default function OrbsSketch() {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const params = useDialKit('Canvas', {
-    dots: {
-      type: 'select',
-      options: ['45', '50', '54', '55', '60', '65', '70', '75', '80', '90', '100', '110', '125', '150', '175', '200'],
-      default: '54',
-    },
-    spacing: {
-      type: 'slider',
-      min: 2.0,
-      max: 2.4,
-      step: 0.01,
-      default: 2.05,
-    },
-  });
-
   const dotCountRef = useRef(BASE_COUNT);
-  dotCountRef.current = Number(params.dots) || BASE_COUNT;
 
   const spacingRef = useRef(2.05);
-  spacingRef.current = Number(params.spacing) || 2.05;
+  spacingRef.current = 2.05;
 
   const currentViewRef = useRef(0);
   const activeRiskRef = useRef<'all' | 'low' | 'medium' | 'high'>('all');
@@ -109,6 +92,7 @@ export default function OrbsSketch() {
         let balls: Ball[] = [];
         let simT = 0;
         let mode: 'freeform' | 'transitioning' | 'grid' = 'freeform';
+        let hasEntered = false;
         let hoveredBlob = -1;
         let prevDotCount = dotCountRef.current;
         let prevSpacing = spacingRef.current;
@@ -236,7 +220,7 @@ export default function OrbsSketch() {
             if (spd > 2.0) { this.vx = this.vx / spd * 2.0; this.vy = this.vy / spd * 2.0; }
             this.x += this.vx; this.y += this.vy;
             const pad = this.r * 0.4;
-            const topPad = Math.max(pad, H * 0.13 + this.r);
+            const topPad = hasEntered ? Math.max(pad, H * 0.13 + this.r) : pad;
             if (this.x < pad)     this.vx += (pad - this.x) * 0.06;
             if (this.x > W - pad) this.vx -= (this.x - (W - pad)) * 0.06;
             if (this.y < topPad)  this.vy += (topPad - this.y) * 0.06;
@@ -1006,6 +990,7 @@ export default function OrbsSketch() {
           document.getElementById('enter-btn')?.addEventListener('click', e => {
             e.preventDefault(); e.stopPropagation();
             if (mode !== 'freeform') return;
+            hasEntered = true;
             // Always land on Default View (grid) when entering
             localViewIdx = 0;
             currentViewRef.current = 0;

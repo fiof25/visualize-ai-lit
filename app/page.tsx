@@ -1,8 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { DialRoot } from 'dialkit';
-import 'dialkit/styles.css';
 
 const OrbsSketch = dynamic(() => import('./components/OrbsSketch'), { ssr: false });
 
@@ -141,7 +139,6 @@ export default function Home() {
       </div>
 
       <OrbsSketch />
-      <DialRoot position="bottom-right" />
     </>
   );
 }
