@@ -26,7 +26,6 @@ export default function Home() {
 
       <div id="blob-tooltip">
         <div className="tip-title" id="tip-title" />
-        <div id="tip-tags" className="tip-tags" />
       </div>
 
       <div id="story-panel">

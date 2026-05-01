@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useDialKit } from 'dialkit';
 
-const BASE_COUNT = 45;
+const BASE_COUNT = 54;
 const BASE_RADIUS = 48;
 
 function computeBaseR(count: number) {
@@ -16,8 +16,8 @@ export default function OrbsSketch() {
   const params = useDialKit('Canvas', {
     dots: {
       type: 'select',
-      options: ['45', '50', '55', '60', '65', '70', '75', '80', '90', '100', '110', '125', '150', '175', '200'],
-      default: '45',
+      options: ['45', '50', '54', '55', '60', '65', '70', '75', '80', '90', '100', '110', '125', '150', '175', '200'],
+      default: '54',
     },
     spacing: {
       type: 'slider',
@@ -44,13 +44,13 @@ export default function OrbsSketch() {
       if (!containerRef.current) return;
 
       p5Instance = new P5((p: InstanceType<typeof P5>) => {
-        const PR = 242, PG = 237, PB = 225;
+        const PR = 216, PG = 228, PB = 255;
         const COLORS = [
-          [190, 118, 98],
-          [108, 135, 178],
-          [198, 162, 95],
-          [100, 148, 120],
-          [195, 148, 175],
+          [193, 121, 101],
+          [111, 138, 181],
+          [201, 165, 98],
+          [103, 151, 123],
+          [198, 151, 178],
         ] as [number, number, number][];
 
         const VIEWS = [
@@ -116,9 +116,9 @@ export default function OrbsSketch() {
         let zoomedSector: string | null = null;
         let hoveredCluster: string | null = null;
         const SECTOR_COLORS: Record<string, [number, number, number]> = {
-          healthcare: [190, 118, 98],
-          government: [108, 135, 178],
-          education:  [198, 162, 95],
+          healthcare: [193, 121, 101],
+          government: [111, 138, 181],
+          education:  [201, 165, 98],
         };
         const sectorInfo: Record<string, { cx: number; cy: number; r: number }> = {};
 
@@ -236,9 +236,10 @@ export default function OrbsSketch() {
             if (spd > 2.0) { this.vx = this.vx / spd * 2.0; this.vy = this.vy / spd * 2.0; }
             this.x += this.vx; this.y += this.vy;
             const pad = this.r * 0.4;
+            const topPad = Math.max(pad, H * 0.13 + this.r);
             if (this.x < pad)     this.vx += (pad - this.x) * 0.06;
             if (this.x > W - pad) this.vx -= (this.x - (W - pad)) * 0.06;
-            if (this.y < pad)     this.vy += (pad - this.y) * 0.06;
+            if (this.y < topPad)  this.vy += (topPad - this.y) * 0.06;
             if (this.y > H - pad) this.vy -= (this.y - (H - pad)) * 0.06;
           }
         }
@@ -307,14 +308,19 @@ export default function OrbsSketch() {
           const cols = Math.max(2, Math.round(Math.sqrt(count * aspect)));
           const rows = Math.ceil(count / cols);
           const padX = W * 0.08;
-          const padY = H * 0.12;
+          const padYTop = H * 0.13;
+          const padYBottom = H * 0.08;
           const positions: { x: number; y: number }[] = [];
-          const colStep = cols > 1 ? (W - padX * 2) / (cols - 1) : 0;
-          const rowStep = rows > 1 ? (H - padY * 2) / (rows - 1) : 0;
+          const colStep = cols > 1 ? (W - padX * 2) / (cols - 1) * 0.92 : 0;
+          const rowStep = rows > 1 ? (H - padYTop - padYBottom) / (rows - 1) * 0.92 : 0;
+          const gridW = (cols - 1) * colStep;
+          const gridH = (rows - 1) * rowStep;
+          const startX = (W - gridW) / 2;
+          const startY = padYTop + ((H - padYTop - padYBottom) - gridH) / 2;
           for (let i = 0; i < count; i++) {
             const c = i % cols;
             const r = Math.floor(i / cols);
-            positions.push({ x: padX + c * colStep, y: padY + r * rowStep });
+            positions.push({ x: startX + c * colStep, y: startY + r * rowStep });
           }
           return positions;
         }
@@ -1138,19 +1144,6 @@ export default function OrbsSketch() {
               if (hit !== -1) {
                 const s = stories[hit];
                 if (tipTitle) tipTitle.textContent = s.title;
-                const tipTags = document.getElementById('tip-tags');
-                if (tipTags) {
-                  if (!s.isPlaceholder) {
-                    const sc = SECTOR_COLORS[s.category] ?? [150, 130, 110];
-                    const riskColor = s.risk === 'low' ? '#7BBF8A' : s.risk === 'medium' ? '#E6A840' : '#D16B5A';
-                    const sectorLabel = SECTOR_DISPLAY[s.category] ?? s.category;
-                    const riskLabel = s.risk === 'low' ? 'Low Risk' : s.risk === 'medium' ? 'Medium Risk' : 'High Risk';
-                    tipTags.innerHTML = `<span class="tip-tag" style="background:rgb(${sc[0]},${sc[1]},${sc[2]})">${sectorLabel}</span><span class="tip-tag" style="background:${riskColor}">${riskLabel}</span>`;
-                    tipTags.style.display = 'flex';
-                  } else {
-                    tipTags.style.display = 'none';
-                  }
-                }
                 blobTooltip?.classList.add('visible');
               } else {
                 blobTooltip?.classList.remove('visible');
