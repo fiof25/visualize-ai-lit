@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 type Visibility = 'private' | 'public';
-type Status = 'pending' | 'approved' | 'declined';
-type FilterTab = 'all' | 'pending' | 'approved' | 'declined';
+type Status = 'pending' | 'approved';
+type FilterTab = 'all' | 'pending' | 'approved';
 
 interface Story {
   id: number;
@@ -83,7 +83,6 @@ export default function OrgDashboard() {
     all:      STORIES.length,
     pending:  STORIES.filter(s => status[s.id] === 'pending').length,
     approved: STORIES.filter(s => status[s.id] === 'approved').length,
-    declined: STORIES.filter(s => status[s.id] === 'declined').length,
   };
 
   const visible = filter === 'all' ? STORIES : STORIES.filter(s => status[s.id] === filter);
@@ -127,7 +126,6 @@ export default function OrgDashboard() {
         /* Cards */
         .card-list { display: flex; flex-direction: column; gap: 20px; margin-top: 28px; }
         .story-card { display: flex; flex-direction: column; transition: opacity 0.4s; }
-        .story-card.declined { opacity: 0.45; }
         .card-body { background: #f6f0e7; border: 1px solid #ded6c4; padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; }
         .story-card.approved .card-body { border-color: rgba(16,185,129,0.4); }
         .card-top { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
@@ -140,18 +138,14 @@ export default function OrgDashboard() {
         .meta-dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(30,24,16,0.2); }
         .status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 9px; border-radius: 38px; font-weight: 500; letter-spacing: 0.03em; }
         .status-badge.approved { background: rgba(16,185,129,0.12); color: #047857; }
-        .status-badge.declined { background: rgba(239,68,68,0.1); color: #b91c1c; }
 
         .card-controls-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
         .vis-toggle { display: flex; border: 0.5px solid #d8cfbc; overflow: hidden; }
         .vis-btn { padding: 7px 11px; font-size: 11px; font-family: 'Cactus Classical Serif', Georgia, serif; border: none; border-right: 0.5px solid #eae4d6; cursor: pointer; transition: background 0.18s; background: transparent; color: #000; white-space: nowrap; }
         .vis-btn:last-child { border-right: none; }
         .vis-btn.on { background: #d8cfbc; }
-        .vis-btn:disabled { cursor: default; opacity: 0.4; }
         .btn-approve { padding: 7px 14px; font-size: 11px; font-family: 'Cactus Classical Serif', Georgia, serif; background: #000; color: #fff; border: 0.5px solid #000; cursor: pointer; transition: opacity 0.18s; white-space: nowrap; }
         .btn-approve:hover { opacity: 0.85; }
-        .btn-decline { display: flex; align-items: center; justify-content: center; padding: 7px 8px; background: transparent; color: rgba(30,24,16,0.3); border: 0.5px solid #d8cfbc; cursor: pointer; transition: border-color 0.18s, color 0.18s; }
-        .btn-decline:hover { border-color: rgba(60,45,25,0.4); color: #b91c1c; }
         .btn-undo { padding: 7px 14px; font-size: 11px; font-family: 'Cactus Classical Serif', Georgia, serif; background: transparent; color: rgba(30,24,16,0.35); border: 0.5px dashed #d8cfbc; cursor: pointer; white-space: nowrap; }
 
         /* Empty */
@@ -189,10 +183,6 @@ export default function OrgDashboard() {
                 <span className="org-stat-value">{counts.approved}</span>
                 <span className="org-stat-label">Approved</span>
               </div>
-              <div className="org-stat">
-                <span className="org-stat-value">{counts.declined}</span>
-                <span className="org-stat-label">Declined</span>
-              </div>
             </div>
           </div>
 
@@ -204,7 +194,6 @@ export default function OrgDashboard() {
                 { key: 'all',      label: 'All',      swatch: '#1e1810' },
                 { key: 'pending',  label: 'Pending',  swatch: '#c6a25f' },
                 { key: 'approved', label: 'Approved', swatch: '#649478' },
-                { key: 'declined', label: 'Declined', swatch: '#be7662' },
               ] as { key: FilterTab; label: string; swatch: string }[]).map(({ key, label, swatch }) => (
                 <div
                   key={key}
@@ -227,7 +216,7 @@ export default function OrgDashboard() {
               const v = visibility[story.id];
               const risk = RISK_CONFIG[story.risk];
               return (
-                <div key={story.id} className={`story-card ${s !== 'pending' ? s : ''}`}>
+                <div key={story.id} className={`story-card ${s === 'approved' ? 'approved' : ''}`}>
                   <div className="card-body">
                     <div className="card-top">
                       <h3 className="card-title">{story.title}</h3>
@@ -246,25 +235,16 @@ export default function OrgDashboard() {
                       </span>
                       <span className="meta-dot" />
                       <span className="meta-author">{story.date}</span>
-                      {s !== 'pending' && (
-                        <span className={`status-badge ${s}`}>
-                          {s === 'approved' ? '✓ Published' : '✕ Declined'}
-                        </span>
+                      {s === 'approved' && (
+                        <span className="status-badge approved">✓ Published</span>
                       )}
                       <div className="card-controls-right">
                         <div className="vis-toggle">
-                          <button className={`vis-btn ${v === 'private' ? 'on' : ''}`} onClick={() => setVisibility(prev => ({ ...prev, [story.id]: 'private' }))} disabled={s === 'declined'}>Private</button>
-                          <button className={`vis-btn ${v === 'public' ? 'on' : ''}`} onClick={() => setVisibility(prev => ({ ...prev, [story.id]: 'public' }))} disabled={s === 'declined'}>Public</button>
+                          <button className={`vis-btn ${v === 'private' ? 'on' : ''}`} onClick={() => setVisibility(prev => ({ ...prev, [story.id]: 'private' }))}>Private</button>
+                          <button className={`vis-btn ${v === 'public' ? 'on' : ''}`} onClick={() => setVisibility(prev => ({ ...prev, [story.id]: 'public' }))}>Public</button>
                         </div>
                         {s === 'pending' ? (
-                          <>
-                            <button className="btn-approve" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'approved' }))}>Approve and publish</button>
-                            <button className="btn-decline" title="Decline" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'declined' }))}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
-                              </svg>
-                            </button>
-                          </>
+                          <button className="btn-approve" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'approved' }))}>Approve and publish</button>
                         ) : (
                           <button className="btn-undo" onClick={() => setStatus(prev => ({ ...prev, [story.id]: 'pending' }))}>Undo</button>
                         )}
