@@ -379,3 +379,65 @@ body.grid-mode canvas { cursor: pointer; }
   color: rgba(30, 24, 16, 0.85);
   white-space: nowrap;
 }
+
+/* Help hint animation — shown once after entering the platform */
+#help-pulse {
+  position: fixed;
+  border-radius: 50%;
+  border: 1.5px solid rgba(30, 24, 16, 0.35);
+  pointer-events: none; z-index: 80;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1);
+  transition: opacity 0.6s ease;
+}
+#help-pulse.visible {
+  opacity: 1;
+  animation: helpPulse 2s ease-out infinite;
+}
+@keyframes helpPulse {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0;   }
+}
+#help-label {
+  position: fixed; bottom: 40px; left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  pointer-events: none; z-index: 80;
+  font-family: 'Cactus Classical Serif', Georgia, serif;
+  font-size: 13px; color: rgba(30, 24, 16, 0.40);
+  letter-spacing: 0.04em; white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#help-label.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Mobile: drawer instead of centred modal */
+@media (max-width: 640px) {
+  #story-panel {
+    align-items: flex-end;
+  }
+  #story-inner {
+    width: 100%;
+    max-height: 82vh;
+    border-radius: 16px 16px 0 0;
+    padding: 8px 24px 48px;
+    transform: translateY(100%);
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 -4px 40px rgba(30, 24, 16, 0.14);
+  }
+  #story-panel.open #story-inner {
+    transform: translateY(0);
+    /* desktop scale-in overridden */
+  }
+  /* Drawer handle */
+  #story-inner::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: rgba(30, 24, 16, 0.15);
+    border-radius: 2px;
+    margin: 12px auto 18px;
+  }
+}

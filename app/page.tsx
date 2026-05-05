@@ -139,6 +139,9 @@ export default function Home() {
         <div className="cluster-label" id="label-education">Education</div>
       </div>
 
+      <div id="help-pulse" />
+      <div id="help-label">Click a circle to read its story</div>
+
       <OrbsSketch />
       <DialRoot position="bottom-right" />
     </>

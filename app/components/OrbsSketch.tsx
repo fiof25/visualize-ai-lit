@@ -6,9 +6,6 @@ import { useDialKit } from 'dialkit';
 const BASE_COUNT = 45;
 const BASE_RADIUS = 48;
 
-function computeBaseR(count: number) {
-  return BASE_RADIUS * Math.sqrt(BASE_COUNT / count);
-}
 
 export default function OrbsSketch() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,6 +118,10 @@ export default function OrbsSketch() {
           education:  [198, 162, 95],
         };
         const sectorInfo: Record<string, { cx: number; cy: number; r: number }> = {};
+
+        let mobileScale = 1;
+        // Shadows module-level computeBaseR so mobileScale is applied everywhere inside the sketch
+        const computeBaseR = (count: number) => BASE_RADIUS * Math.sqrt(BASE_COUNT / count) * mobileScale;
 
         let bobT = 0;
         interface RingParam { cx: number; cy: number; r: number; baseAngle: number }
@@ -649,6 +650,8 @@ export default function OrbsSketch() {
         let stories = buildStories(dotCountRef.current);
 
         function openStory(i: number) {
+          document.getElementById('help-pulse')?.classList.remove('visible');
+          document.getElementById('help-label')?.classList.remove('visible');
           const storyTitle = document.getElementById('story-title');
           const storyBody = document.getElementById('story-body');
           const storyPanel = document.getElementById('story-panel');
@@ -862,6 +865,7 @@ export default function OrbsSketch() {
 
         p.setup = () => {
           W = window.innerWidth; H = window.innerHeight;
+          mobileScale = W < 640 ? 0.62 : 1;
           p.createCanvas(W, H);
           const initCount = dotCountRef.current;
           p.frameRate(initCount <= 60 ? 60 : initCount <= 100 ? 45 : 30);
@@ -900,12 +904,19 @@ export default function OrbsSketch() {
             });
           });
 
-          document.getElementById('story-close')?.addEventListener('click', () => {
+          document.getElementById('story-close')?.addEventListener('click', (e) => {
+            e.stopPropagation();
             document.getElementById('story-panel')?.classList.remove('open');
           });
+          // Prevent clicks inside the card from falling through to the canvas
+          document.getElementById('story-inner')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+          });
           document.getElementById('story-panel')?.addEventListener('click', e => {
-            if (e.target === document.getElementById('story-panel'))
+            if (e.target === document.getElementById('story-panel')) {
+              e.stopPropagation();
               document.getElementById('story-panel')?.classList.remove('open');
+            }
           });
 
           document.querySelectorAll('.next-btn').forEach(btn => {
@@ -1020,12 +1031,36 @@ export default function OrbsSketch() {
                 viewToggle.classList.add('visible');
               }));
             }, 1600);
+
+            // Help animation: pulse a centre ball and show label after grid settles
+            setTimeout(() => {
+              const hintBall = balls.reduce((best, b) => {
+                const d1 = Math.hypot(b.tx - W * 0.5, b.ty - H * 0.5);
+                const d2 = Math.hypot(best.tx - W * 0.5, best.ty - H * 0.5);
+                return d1 < d2 ? b : best;
+              }, balls[0]);
+              const helpPulse = document.getElementById('help-pulse');
+              if (helpPulse && hintBall) {
+                const r = hintBall.baseR;
+                helpPulse.style.left = hintBall.tx + 'px';
+                helpPulse.style.top = hintBall.ty + 'px';
+                helpPulse.style.width = (r * 2 + 10) + 'px';
+                helpPulse.style.height = (r * 2 + 10) + 'px';
+                helpPulse.classList.add('visible');
+              }
+              document.getElementById('help-label')?.classList.add('visible');
+              setTimeout(() => {
+                document.getElementById('help-pulse')?.classList.remove('visible');
+                document.getElementById('help-label')?.classList.remove('visible');
+              }, 5000);
+            }, 3200);
           };
           document.addEventListener('click', handleEnter);
         };
 
         p.windowResized = () => {
           W = window.innerWidth; H = window.innerHeight;
+          mobileScale = W < 640 ? 0.62 : 1;
           p.resizeCanvas(W, H);
           p.background(PR, PG, PB);
         };
